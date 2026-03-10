@@ -237,6 +237,17 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5 4.5-5z' fill='%23888'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 7px center; padding-right: 22px;
 }
+/* Dropdown innerhalb .vt Tabelle — identisch zu .f select */
+.vt-select {
+  width: 100%; border: var(--bd); outline: none; cursor: pointer;
+  background: var(--inp-bg); color: var(--g1);
+  padding: 5px 22px 5px 7px; font-size: 11px; font-family: 'IBM Plex Sans', sans-serif;
+  appearance: none; -webkit-appearance: none;
+  transition: border-color .15s, background .25s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5 4.5-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center;
+}
+.vt-select:focus { border-color: var(--rot); background: var(--inp-foc); }
 
 /* CHECKS — normal */
 .cg { display: flex; flex-wrap: wrap; gap: 4px 8px; }
@@ -350,12 +361,12 @@ body.printing textarea::placeholder { color: transparent !important; }
   <div class="row">
 
     <!-- 01 PATIENT -->
-    <div class="section" style="border-left-color:var(--c-patient); flex:1;">
+    <div class="section" style="border-left-color:var(--c-patient); flex:1; display:flex; flex-direction:column;">
       <div class="s-head">
         <span class="s-num" style="color:var(--c-patient);">01</span>
         <span class="s-title">Patientendaten</span>
       </div>
-      <div class="s-body">
+      <div class="s-body" style="flex:1; display:flex; flex-direction:column;">
         <div class="g4">
           <div class="f c2"><label>Nachname</label><input type="text" placeholder="Mustermann"></div>
           <div class="f c2"><label>Vorname</label><input type="text" placeholder="Max"></div>
@@ -364,7 +375,10 @@ body.printing textarea::placeholder { color: transparent !important; }
             <select><option value="">—</option><option>Männlich</option><option>Weiblich</option><option>Divers</option></select>
           </div>
           <div class="f"><label>Arbeitgeber / Job</label><input type="text" placeholder="z.B. Polizei, Feuerwehr, Arzt …"></div>
-          <div class="f c4"><label>Allergien / Medikamente</label><input type="text" placeholder="z.B. Penicillin-Allergie, ASS 100 mg, Metformin …"></div>
+        </div>
+        <div class="f" style="flex:1; display:flex; flex-direction:column; margin-top:4px;">
+          <label>Allergien / Medikamente</label>
+          <textarea style="flex:1; min-height:40px; resize:none;" placeholder="z.B. Penicillin-Allergie, ASS 100 mg, Metformin …"></textarea>
         </div>
       </div>
     </div>
@@ -378,7 +392,7 @@ body.printing textarea::placeholder { color: transparent !important; }
       <div class="s-body">
         <div class="g4">
           <div class="f"><label>Fahrzeugtyp</label>
-            <select><option value="">—</option><option>RTW</option><option>KTW</option><option>NEF</option><option>RTH</option><option>First Responder</option><option>GW-San</option><option>Sonstiges</option></select>
+            <select><option value="">—</option><option>First Responder</option><option>KTW</option><option>RTW</option><option>NEF</option><option>RTH</option><option>Sonstiges</option></select>
           </div>
           <div class="f"><label>Kennung</label><input type="text" placeholder="Florian 1-83-1"></div>
           <div class="f"><label>Wache / Org.</label><input type="text" placeholder="RW Mitte"></div>
@@ -400,14 +414,14 @@ body.printing textarea::placeholder { color: transparent !important; }
       <div class="s-body">
         <div class="g3">
           <div class="f"><label>Einsatzart</label>
-            <select><option value="">—</option><option>Notfalleinsatz (RTW)</option><option>Notarzteinsatz (NEF/RTH)</option><option>First Responder</option><option>Krankentransport</option><option>Grossschadensereignis</option><option>Fehleinsatz</option></select>
+            <select><option value="">—</option><option>First Responder</option><option>Krankentransport</option><option>Notfalleinsatz (RTW)</option><option>Notarzteinsatz (NEF/RTH)</option><option>Grossschadensereignis</option><option>Sanitätsdienst</option><option>Fehleinsatz</option></select>
           </div>
           <div class="f"><label>Patientenlage bei Ankunft</label>
             <select><option value="">—</option><option>Bewusst, ansprechbar</option><option>Bewusstsein eingeschränkt</option><option>Bewusstlos, atmend</option><option>Bewusstlos – Reanimation</option><option>Stehend / Gehend</option><option>Sitzend</option><option>Liegend</option><option>Eingeklemmt</option></select>
           </div>
           <div class="f"><label>Besonderheit</label><input type="text" placeholder="Besonderheit Lage …"></div>
           <div class="f c3"><label>Situationsbeschreibung</label>
-            <textarea class="xl" placeholder="Detaillierte Beschreibung der Notfallsituation, Vorfallhergang, Lage bei Eintreffen …"></textarea>
+            <textarea class="xl" style="flex:1; min-height:120px; resize:none; font-size:12px;" placeholder="Detaillierte Beschreibung der Notfallsituation, Vorfallhergang, Lage bei Eintreffen …"></textarea>
           </div>
         </div>
       </div>
@@ -436,12 +450,12 @@ body.printing textarea::placeholder { color: transparent !important; }
             <select><option value="">—</option><option>Stabil</option><option>Tachykardie</option><option>Bradykardie</option><option>Hypotonie</option><option>Hypertonie</option><option>Kreislaufstillstand</option></select>
           </div>
           <div class="f"><label>D — Neurologie / GCS</label>
-            <select><option value="">—</option><option>GCS 15 (normal)</option><option>GCS 9–14</option><option>GCS 3–8</option><option>Orientiert</option><option>Desorientiert</option></select>
+            <select><option value="">—</option><option>Orientiert</option><option>Desorientiert</option></select>
           </div>
           <div class="f"><label>Pupillen</label>
             <select><option value="">—</option><option>Isokor, reagibel</option><option>Anisokor</option><option>Lichtstarr</option></select>
           </div>
-          <div class="f"><label>GCS gesamt</label><input type="number" min="3" max="15" placeholder="3–15"></div>
+          <div class="f"><label>GCS (Glasgow Coma Scale)</label><input type="number" min="3" max="15" placeholder="3–15"></div>
         </div>
         <div class="divider"></div>
         <div class="sub-lbl" style="margin-bottom:4px;">Vitalzeichen-Verlauf</div>
@@ -453,18 +467,18 @@ body.printing textarea::placeholder { color: transparent !important; }
           </thead>
           <tbody>
             <tr>
-              <td><div class="vt-time-cell"><input type="text" id="vt1_time"><button class="btn-now" onclick="setNow('vt1_time')">⏱1</button></div></td>
-              <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+              <td><div class="vt-time-cell"><input type="text" id="vt1_time"><button class="btn-now" onclick="setNow('vt1_time')">⏱Zeit</button></div></td>
+              <td><input type="text" placeholder="120"></td><td><input type="text" placeholder="80"></td><td><input type="text" placeholder="80"></td><td><input type="text" placeholder="99"></td>
             </tr>
             <tr>
-              <td><div class="vt-time-cell"><input type="text" id="vt2_time"><button class="btn-now" onclick="setNow('vt2_time')">⏱2</button></div></td>
+              <td><div class="vt-time-cell"><input type="text" id="vt2_time"><button class="btn-now" onclick="setNow('vt2_time')">⏱Zeit</button></div></td>
               <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
             </tr>
           </tbody>
         </table>
         <div class="divider"></div>
         <div class="f"><label>Erstbefund Freitext / Anamnese (SAMPLER)</label>
-          <textarea style="min-height:46px;" placeholder="Weitere Befunde, klinischer Eindruck, Schmerzscore NRS …"></textarea>
+          <textarea style="flex:1; min-height:40px; resize:none; font-size:12px;" placeholder="Weitere Befunde, klinischer Eindruck, Schmerzscore NRS …"></textarea>
         </div>
       </div>
     </div>
@@ -497,7 +511,7 @@ body.printing textarea::placeholder { color: transparent !important; }
         </div>
         <div class="f" style="flex:1; display:flex; flex-direction:column; margin-top:6px;">
           <label>Beschreibung / Besonderheiten</label>
-          <textarea style="flex:1; min-height:40px; resize:none; font-size:12px;" placeholder="Genaue Beschreibung …"></textarea>
+          <textarea style="flex:1; min-height:40px; resize:none; font-size:12px;" placeholder="Genaue Beschreibung der Verletztungen …"></textarea>
         </div>
       </div>
     </div>
@@ -529,7 +543,7 @@ body.printing textarea::placeholder { color: transparent !important; }
         </div>
         <div class="f" style="flex:1; display:flex; flex-direction:column; margin-top:6px; padding-bottom:4px;">
           <label>Beschreibung / Anamnese</label>
-          <textarea style="flex:1; min-height:40px; resize:none; font-size:9.5px;" placeholder="Symptombeginn, Verlauf, weitere Angaben …"></textarea>
+          <textarea style="flex:1; min-height:40px; resize:none; font-size:12px;" placeholder="Symptombeginn, Verlauf, weitere Angaben …"></textarea>
         </div>
       </div>
     </div>
@@ -594,15 +608,42 @@ body.printing textarea::placeholder { color: transparent !important; }
         </div>
 
         <div class="divider" style="margin-top:6px;"></div>
-        <div class="g4">
-          <div class="f c3"><label>Medikamentengabe — Präparat · Dosis · Applikation · Zeit</label>
-            <textarea style="min-height:50px;" placeholder="Morphin 5 mg i.v. 10:32 – NRS 8→4&#10;Aspirin 500 mg p.o. 10:40 …"></textarea>
+        <div style="display:flex; gap:10px; align-items:stretch; margin-top:4px;">
+
+          <!-- Medikamentengabe — .vt Stil wie Vitalzeichen -->
+          <div style="flex:1.3; min-width:0; display:flex; flex-direction:column;">
+            <div style="font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--g4); margin-bottom:4px;">Medikamentengabe</div>
+            <table class="vt" style="font-size:9px;">
+              <thead>
+                <tr>
+                  <th style="width:28%;">Medikament</th>
+                  <th style="width:27%;">Applikation</th>
+                  <th style="width:21%;">Uhrzeit</th>
+                  <th style="width:24%;">Verabreicher</th>
+                </tr>
+              </thead>
+              <tbody id="med-tbody">
+                <tr>
+                  <td><input type="text" placeholder="Morphin 5mg"></td>
+                  <td><select class="vt-select"><option value="">—</option><option>Intravenöser Zugang (I.V.)</option><option>Intraossärer Zugang (I.O.)</option><option>Oral (p.o.)</option><option>Inhalativ</option></select></td>
+                  <td><div class="vt-time-cell"><input type="text" placeholder="HH:MM"><button class="btn-now" onclick="setNowMed(this)">⏱</button></div></td>
+                  <td><input type="text" placeholder="Name"></td>
+                </tr>
+                <tr>
+                  <td><input type="text" placeholder=""></td>
+                  <td><select class="vt-select"><option value="">—</option><option>Intravenöser Zugang (I.V.)</option><option>Intraossärer Zugang (I.O.)</option><option>Oral (p.o.)</option><option>Inhalativ</option></select></td>
+                  <td><div class="vt-time-cell"><input type="text" placeholder="HH:MM"><button class="btn-now" onclick="setNowMed(this)">⏱</button></div></td>
+                  <td><input type="text" placeholder=""></td>
+                </tr>
+              </tbody>
+            </table>
+            <button onclick="addMedRow()" style="margin-top:5px; font-size:9px; font-weight:700; padding:4px 12px; background:var(--rot); color:#fff; border:none; cursor:pointer; letter-spacing:.04em; align-self:flex-start;">+ Zeile hinzufügen</button>
           </div>
-          <div class="f"><label>Schockraum-Voranmeldung</label>
-            <select><option value="">—</option><option>Ja</option><option>Nein</option><option>Nicht erforderlich</option></select>
-          </div>
-          <div class="f c4"><label>Sonstige Maßnahmen / Besonderheiten</label>
-            <textarea style="min-height:36px;" placeholder="Weitere Maßnahmen, Besonderheiten im Einsatzverlauf …"></textarea>
+
+          <!-- Sonstige Maßnahmen — identisch zu Freitext / Interne Notizen -->
+          <div class="f" style="flex:1; min-width:0; display:flex; flex-direction:column;">
+            <label>Sonstige Maßnahmen / Besonderheiten</label>
+            <textarea style="flex:1; min-height:80px; resize:none;" placeholder="Weitere Maßnahmen, Besonderheiten im Einsatzverlauf …"></textarea>
           </div>
         </div>
       </div>
@@ -612,40 +653,44 @@ body.printing textarea::placeholder { color: transparent !important; }
   <!-- ══ ROW 4: Transport · Ergebnis · Bemerkungen ══ -->
   <div class="row">
 
-    <!-- 09 TRANSPORT -->
+    <!-- 08 TRANSPORT -->
     <div class="section" style="border-left-color:var(--c-transport); flex:0.9;">
       <div class="s-head">
-        <span class="s-num" style="color:var(--c-transport);">09</span>
+        <span class="s-num" style="color:var(--c-transport);">08</span>
         <span class="s-title">Transport</span>
       </div>
       <div class="s-body">
-        <div class="g2">
-          <div class="f c2">
-            <label>Transportiert?</label>
-            <div class="rg" style="padding-top:3px;">
-              <label class="ri"><input type="radio" name="transportiert_wahl"> Ja</label>
-              <label class="ri"><input type="radio" name="transportiert_wahl"> Nein (verweigert)</label>
-              <label class="ri"><input type="radio" name="transportiert_wahl"> Vor Ort verstorben</label>
-              <label class="ri"><input type="radio" name="transportiert_wahl"> Arztvorst. vor Ort</label>
-            </div>
-          </div>
-          <div class="f"><label>Transportmittel</label>
+        <div class="f c2" style="margin-bottom:2px;"><label>Transportiert?</label></div>
+        <div style="display:flex; flex-wrap:wrap; gap:5px 18px; margin-bottom:6px;">
+          <label class="ci-lg"><input type="checkbox"> Ja</label>
+          <label class="ci-lg"><input type="checkbox"> Nein (verweigert)</label>
+          <label class="ci-lg"><input type="checkbox"> Vor Ort verstorben</label>
+          <label class="ci-lg"><input type="checkbox"> Arztvorst. vor Ort</label>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div class="f" style="flex:1;"><label>Transportmittel</label>
             <select><option value="">—</option><option>RTW</option><option>KTW</option><option>RTH</option><option>NAW</option><option>Polizei</option></select>
           </div>
-          <div class="f"><label>Abfahrtszeit</label><div class="vt-time-cell"><input type="text" id="abfahrt_time" placeholder="HH:MM"><button class="btn-now" onclick="setNow('abfahrt_time')">⏱ Zeit</button></div></div>
-          <div class="f c2"><label>Transportziel</label><input type="text" placeholder="Klinikum Muster, Notaufnahme"></div>
-          <div class="f"><label>Ankunft am Ziel</label><div class="vt-time-cell"><input type="text" id="ankunft_ziel_time" placeholder="HH:MM"><button class="btn-now" onclick="setNow('ankunft_ziel_time')">⏱ Zeit</button></div></div>
-          <div class="f c2"><label>Besonderheiten Transport</label>
-            <textarea style="min-height:44px;" placeholder="Monitoring, Beatmung, Nachforderungen …"></textarea>
+          <div class="f" style="flex:1;"><label>Schockraum-Voranmeldung</label>
+            <select><option value="">—</option><option>Ja</option><option>Nein</option><option>Nicht erforderlich</option></select>
+          </div>
+        </div>
+        <div class="f"><label>Transportziel</label><input type="text" placeholder="Klinikum Muster, Notaufnahme"></div>
+        <div style="display:flex; gap:8px;">
+          <div class="f" style="flex:1;"><label>Abfahrtszeit</label>
+            <div class="vt-time-cell"><input type="text" id="abfahrt_time" placeholder="HH:MM"><button class="btn-now" onclick="setNow('abfahrt_time')">⏱ Zeit</button></div>
+          </div>
+          <div class="f" style="flex:1;"><label>Ankunft am Ziel</label>
+            <div class="vt-time-cell"><input type="text" id="ankunft_ziel_time" placeholder="HH:MM"><button class="btn-now" onclick="setNow('ankunft_ziel_time')">⏱ Zeit</button></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 08 ERGEBNIS -->
+    <!-- 09 ERGEBNIS -->
     <div class="section" style="border-left-color:var(--c-ergebnis); flex:1.2; display:flex; flex-direction:column;">
       <div class="s-head">
-        <span class="s-num" style="color:var(--c-ergebnis);">08</span>
+        <span class="s-num" style="color:var(--c-ergebnis);">09</span>
         <span class="s-title">Ergebnis &amp; Übergabe</span>
       </div>
       <div class="s-body" style="flex:1; display:flex; flex-direction:column;">
@@ -661,22 +706,22 @@ body.printing textarea::placeholder { color: transparent !important; }
           <div class="f"><label>Einsatzende</label><div class="vt-time-cell"><input type="text" id="einsatzende_time" placeholder="HH:MM"><button class="btn-now" onclick="setNow('einsatzende_time')">⏱ Zeit</button></div></div>
         </div>
         <div class="f" style="flex:1; display:flex; flex-direction:column; margin-top:6px; padding-bottom:6px;">
-          <label>Übergabebericht (SBAR / Freitext)</label>
+          <label>Übergabebericht (Freitext)</label>
           <textarea style="flex:1; min-height:50px; resize:none;" placeholder="Situation · Background · Assessment · Recommendation …"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- 11 BEMERKUNGEN -->
-    <div class="section" style="border-left-color:var(--c-bemerk); flex:0.8;">
+    <!-- 10 BEMERKUNGEN -->
+    <div class="section" style="border-left-color:var(--c-bemerk); flex:0.8; display:flex; flex-direction:column;">
       <div class="s-head">
-        <span class="s-num" style="color:var(--c-bemerk);">11</span>
+        <span class="s-num" style="color:var(--c-bemerk);">10</span>
         <span class="s-title">Sonstige Bemerkungen</span>
       </div>
-      <div class="s-body">
-        <div class="f" style="flex:1;">
+      <div class="s-body" style="flex:1; display:flex; flex-direction:column; padding-bottom:9px;">
+        <div class="f" style="flex:1; display:flex; flex-direction:column;">
           <label>Freitext / Interne Notizen</label>
-          <textarea style="min-height:95px;" placeholder="Sonstige Hinweise, Rückmeldungen, Qualitätssicherung …"></textarea>
+          <textarea style="flex:1; min-height:60px; resize:none;" placeholder="Sonstige Hinweise, Rückmeldungen, Qualitätssicherung …"></textarea>
         </div>
       </div>
     </div>
@@ -687,11 +732,13 @@ body.printing textarea::placeholder { color: transparent !important; }
   <div class="row">
     <div class="section" style="border-left-color:var(--c-sig);">
       <div class="s-head">
-        <span class="s-num" style="color:var(--c-sig);">10</span>
-        <span class="s-title">Unterschriften Einsatzpersonal</span>
+        <span class="s-num" style="color:var(--c-sig);">11</span>
+        <span class="s-title">Unterschriften &amp; Abschluss</span>
       </div>
       <div class="s-body">
         <div class="sig-grid">
+
+          <!-- Protokollführer mit Unterschrift -->
           <div class="sig-box">
             <div class="f" style="margin-bottom:4px;">
               <label>Protokollführer — Name &amp; Qualifikation</label>
@@ -701,20 +748,17 @@ body.printing textarea::placeholder { color: transparent !important; }
             <div class="sig-author-wrap">
               <textarea class="sig-author-input" rows="2" placeholder="Hier unterschreiben …" spellcheck="false"></textarea>
             </div>
-            <span class="sig-hint">Groß und kursiv schreiben — wirkt wie eine Unterschrift</span>
           </div>
+
+          <!-- Notarzt -->
           <div class="sig-box">
-            <div class="f"><label>Mitarbeiter 1</label><input type="text" placeholder="Vor- und Nachname, Qualifikation"></div>
+            <div class="f"><label>Notarzt — Name &amp; Fachrichtung</label><input type="text" placeholder="Dr. Vor- und Nachname, Fachrichtung"></div>
           </div>
-          <div class="sig-box">
-            <div class="f"><label>Mitarbeiter 2</label><input type="text" placeholder="Vor- und Nachname, Qualifikation"></div>
-          </div>
-          <div class="sig-box">
-            <div class="f"><label>Notarzt (falls beteiligt)</label><input type="text" placeholder="Dr. Vor- und Nachname"></div>
-          </div>
+
+          <!-- Patient / Einwilligung -->
           <div class="sig-box">
             <div class="f"><label>Patient / Angehörige (Einwilligung)</label><input type="text" placeholder="Name des Unterzeichners"></div>
-            <div class="f" style="margin-top:6px;">
+            <div class="f">
               <label>Beziehung zum Patienten</label>
               <select>
                 <option value="">—</option>
@@ -725,6 +769,14 @@ body.printing textarea::placeholder { color: transparent !important; }
               </select>
             </div>
           </div>
+
+          <!-- Disposition / Rückmeldung -->
+          <div class="sig-box" style="grid-column: span 2;">
+            <div class="f" style="flex:1; display:flex; flex-direction:column;"><label>Besondere Vorkommnisse</label>
+              <textarea style="min-height:130px; resize:none;" placeholder="Beinahe-Fehler, Kritik, Verbesserungsvorschläge …"></textarea>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -748,6 +800,25 @@ function setNow(id) {
   el.removeAttribute('readonly');
   el.removeAttribute('disabled');
   el.focus();
+}
+function setNowMed(btn) {
+  var inp = btn.previousElementSibling;
+  if (!inp) return;
+  var now = new Date();
+  inp.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  inp.focus();
+}
+var MED_SELECT = '<select class="vt-select"><option value="">—</option><option>Intravenöser Zugang (I.V.)</option><option>Intraossärer Zugang (I.O.)</option><option>Oral (p.o.)</option><option>Inhalativ</option><option>Subkutan (s.c.)</option></select>';
+function addMedRow() {
+  var tbody = document.getElementById('med-tbody');
+  if (!tbody) return;
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><input type="text" placeholder=""></td>' +
+    '<td>' + MED_SELECT + '</td>' +
+    '<td><div class="vt-time-cell"><input type="text" placeholder="HH:MM"><button class="btn-now" onclick="setNowMed(this)">⏱</button></div></td>' +
+    '<td><input type="text" placeholder=""></td>';
+  tbody.appendChild(tr);
 }
 
 // ── PDF Export ──
