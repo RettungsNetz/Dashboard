@@ -306,11 +306,11 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sa
         <div class="ms-head"><span class="ms-num" style="color:#C0392B;">01</span><span class="ms-title">Triage-Kategorie</span></div>
         <div class="ms-body">
           <div class="cat-sel">
-            <div class="cat-btn cat-I"   id="cb-I"   onclick="selCat('I')">  <div class="cat-roman">I</div>  <div class="cat-lbl">Sofort</div></div>
-            <div class="cat-btn cat-II"  id="cb-II"  onclick="selCat('II')"> <div class="cat-roman">II</div> <div class="cat-lbl">Dringend</div></div>
-            <div class="cat-btn cat-III" id="cb-III" onclick="selCat('III')"><div class="cat-roman">III</div><div class="cat-lbl">Nicht Dringend</div></div>
-            <div class="cat-btn cat-IV"  id="cb-IV"  onclick="selCat('IV')"> <div class="cat-roman">IV</div> <div class="cat-lbl">Abwartend</div></div>
-            <div class="cat-btn cat-X"   id="cb-X"   onclick="selCat('X')">  <div class="cat-roman">X</div>  <div class="cat-lbl">Verstorben</div></div>
+            <div class="cat-btn cat-I"   id="cb-I"   onclick="pickCat('I')">  <div class="cat-roman">I</div>  <div class="cat-lbl">Sofort</div></div>
+            <div class="cat-btn cat-II"  id="cb-II"  onclick="pickCat('II')"> <div class="cat-roman">II</div> <div class="cat-lbl">Dringend</div></div>
+            <div class="cat-btn cat-III" id="cb-III" onclick="pickCat('III')"><div class="cat-roman">III</div><div class="cat-lbl">Nicht Dringend</div></div>
+            <div class="cat-btn cat-IV"  id="cb-IV"  onclick="pickCat('IV')"> <div class="cat-roman">IV</div> <div class="cat-lbl">Abwartend</div></div>
+            <div class="cat-btn cat-X"   id="cb-X"   onclick="pickCat('X')">  <div class="cat-roman">X</div>  <div class="cat-lbl">Verstorben</div></div>
           </div>
         </div>
       </div>
@@ -797,7 +797,7 @@ window.closeModal=()=>{
   editId=null;
 };
 window.ovClick=e=>{if(e.target===document.getElementById('modal-ov'))window.closeModal();};
-window.selCat=c=>{
+window.pickCat=c=>{
   activeCat=c;
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('cb-'+c).classList.add('sel');
