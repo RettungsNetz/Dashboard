@@ -500,70 +500,43 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sa
 
 <div class="toast" id="toast"></div>
 
-<!-- ══ APP LOGIC (Firebase REST API — kein SDK nötig) ══ -->
 <script>
+'use strict';
 
-/* ════════════════════════════════════════════════════
-   FIREBASE REST API WRAPPER
-   Verwendet nur fetch() — kein SDK, kein import, kein module
-   Realtime via Server-Sent Events (EventSource / SSE)
-   ════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   FIREBASE REST API — reines fetch(), kein SDK, kein import
+   Sync via Polling alle 2s — simpel, zuverlässig, keine
+   Race-Conditions, keine SSE-Pfad-Probleme
+   ═══════════════════════════════════════════════════════════ */
 
-const FB_BASE = 'https://rettungsnetz-default-rtdb.europe-west1.firebasedatabase.app';
+const FB = 'https://rettungsnetz-default-rtdb.europe-west1.firebasedatabase.app';
 
-// GET: fetch JSON from path
 async function fbGet(path){
-  const r = await fetch(FB_BASE+path+'.json');
-  if(!r.ok) throw new Error('GET '+path+' → '+r.status);
+  const r = await fetch(FB + path + '.json');
+  if(!r.ok) throw new Error('GET ' + path + ' → ' + r.status);
   return r.json();
 }
-// SET: PUT (overwrite)
-async function fbSet(path, data){
-  const r = await fetch(FB_BASE+path+'.json', {
-    method:'PUT', headers:{'Content-Type':'application/json'},
+async function fbPut(path, data){
+  const r = await fetch(FB + path + '.json', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
     body: JSON.stringify(data)
   });
-  if(!r.ok) throw new Error('SET '+path+' → '+r.status);
+  if(!r.ok) throw new Error('PUT ' + path + ' → ' + r.status);
 }
-// PATCH: update specific fields
-async function fbPatch(path, data){
-  const r = await fetch(FB_BASE+path+'.json', {
-    method:'PATCH', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(data)
-  });
-  if(!r.ok) throw new Error('PATCH '+path+' → '+r.status);
-}
-// DELETE
-async function fbDel(path){
-  const r = await fetch(FB_BASE+path+'.json', {method:'DELETE'});
-  if(!r.ok) throw new Error('DEL '+path+' → '+r.status);
+async function fbDel(path, keepalive=false){
+  await fetch(FB + path + '.json', {method:'DELETE', keepalive});
 }
 
-// SSE listener — Firebase supports ?accept=text/event-stream for realtime
-function fbListen(path, onData){
-  const url = FB_BASE + path + '.json?stream=true';
-  const es = new EventSource(url);
-  es.addEventListener('put', e => {
-    try{
-      const msg = JSON.parse(e.data);
-      // Only process root-level puts (full dataset), ignore sub-path updates
-      if(msg.path === '/') onData(msg.data);
-    }catch(err){}
-  });
-  es.onerror = () => {};
-  return es;
-}
-function fbUnlisten(es){
-  try{ if(es) es.close(); }catch(e){}
-}
-
-/* ── CONSTANTS ── */
+/* ═══════════════════════════════════════════════════════════
+   KONSTANTEN
+   ═══════════════════════════════════════════════════════════ */
 const CAT = {
-  I:  {color:'#e63946',bg:'rgba(230,57,70,.14)',  label:'Sofort',      roman:'I'},
-  II: {color:'#f4a261',bg:'rgba(244,162,97,.11)', label:'Dringend',    roman:'II'},
-  III:{color:'#52b788',bg:'rgba(82,183,136,.11)', label:'Nicht Dringl',roman:'III'},
-  IV: {color:'#4895ef',bg:'rgba(72,149,239,.1)',  label:'Abwartend',   roman:'IV'},
-  X:  {color:'#555e6e',bg:'rgba(85,94,110,.14)',  label:'Verstorben',  roman:'X'},
+  I:  {color:'#e63946', bg:'rgba(230,57,70,.14)',  label:'Sofort',       roman:'I'},
+  II: {color:'#f4a261', bg:'rgba(244,162,97,.11)', label:'Dringend',     roman:'II'},
+  III:{color:'#52b788', bg:'rgba(82,183,136,.11)', label:'Nicht Dringl', roman:'III'},
+  IV: {color:'#4895ef', bg:'rgba(72,149,239,.1)',  label:'Abwartend',    roman:'IV'},
+  X:  {color:'#555e6e', bg:'rgba(85,94,110,.14)',  label:'Verstorben',   roman:'X'},
 };
 const CB_MAP = {
   'cb-poly':'Polytrauma','cb-sht':'SHT','cb-thorax':'Thoraxtrauma',
@@ -581,454 +554,624 @@ const TXT = ['f-name','f-dob','f-fundort','f-findtime','f-puls','f-rr','f-spo2',
              'f-hauptv','f-befund','f-massn-extra','f-kh','f-transportzeit','f-bemerk'];
 const SEL = ['f-sex','f-atemweg','f-atmung','f-kreislauf','f-gcs','f-mech','f-transport','f-schockraum'];
 const MED_OPTS = '<option value="">—</option><option>Intravenöser Zugang (I.V.)</option><option>Intraossärer Zugang (I.O.)</option><option>Oral (p.o.)</option><option>Inhalativ</option><option>Subkutan (s.c.)</option>';
-const MY_ID = 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
 
-/* ── STATE ── */
-let patients=[], editId=null, catF="all", trF="all", activeCat=null, isDone=false, patN=0;
-let isOnline=false, editingLocks={};
-let sseP=null, sseL=null; // SSE connections
+// Eindeutige ID für diesen Browser-Tab
+const MY_ID = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 
-/* ── NOTIFY PARENT ── */
-function notifyParentMode(users){
-  try{ window.parent.postMessage({type:'manv-mode',online:isOnline,users:isOnline?users:undefined},'*'); }catch(e){}
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+let patients   = [];
+let editId     = null;
+let catF       = 'all';
+let trF        = 'all';
+let activeCat  = null;   // aktuell gewählte Triage-Kat im Modal
+let isDone     = false;
+let patN       = 0;
+let isOnline   = false;
+let editingLocks = {};   // { patientId: MY_ID_des_bearbeiters }
+let pollTimer  = null;
+
+/* ═══════════════════════════════════════════════════════════
+   PARENT KOMMUNIKATION
+   ═══════════════════════════════════════════════════════════ */
+function notifyParent(users){
+  try{
+    window.parent.postMessage({
+      type: 'manv-mode',
+      online: isOnline,
+      users: isOnline ? users : undefined
+    }, '*');
+  }catch(e){}
 }
 
-/* ── MODE SWITCH ── */
+/* ═══════════════════════════════════════════════════════════
+   ONLINE / OFFLINE STEUERUNG
+   ═══════════════════════════════════════════════════════════ */
 window.handleModeSwitch = () => {
   if(isOnline){
     if(!confirm('Online-Modus verlassen?\nDaten bleiben in Firebase gespeichert.'))return;
     goOffline();
   } else {
-    doConnect();
+    showConnectDialog();
   }
 };
-window.closeDlg = () => document.getElementById('dlg-ov').classList.remove('open');
-window.connectFB = () => { window.closeDlg(); doConnect(); };
+window.closeDlg   = () => document.getElementById('dlg-ov').classList.remove('open');
+window.connectFB  = () => { window.closeDlg(); doConnect(); };
+
+function showConnectDialog(){
+  document.getElementById('dlg-ov').classList.add('open');
+}
 
 async function doConnect(){
-  toast('Verbinde …','info');
-  try{
-    // Test connection
+  window.closeDlg();
+  toast('Verbinde mit Firebase …', 'info');
+  try {
+    // Verbindungstest
     await fbGet('/manv/patients');
-
-    // Register presence
-    await fbSet('/manv/presence/'+MY_ID, {at: Date.now()});
-
-    // Cleanup presence on page close — fetch with keepalive is reliable
-    window.addEventListener('beforeunload', ()=>{
-      fetch(FB_BASE+'/manv/presence/'+MY_ID+'.json', {method:'DELETE', keepalive:true});
-    }, {once:true});
-
-    isOnline = true;
-
-    // SSE: watch patients — only react to full root puts
-    sseP = fbListen('/manv/patients', (data) => {
-      if(data === null){ patients=[]; patN=0; }
-      else {
-        patients = Object.values(data).sort((a,b)=>(a.num||0)-(b.num||0));
-        patN = patients.reduce((m,p)=>Math.max(m,p.num||0),0);
-      }
-      render();
-    });
-
-    // SSE: watch editing locks
-    sseL = fbListen('/manv/editing', (data) => {
-      editingLocks = data || {};
-      updateLockBadges();
-      updateModalLockWarning();
-    });
-
-    // SSE: watch presence count
-    window._ssePresence = fbListen('/manv/presence', (data) => {
-      const n = data ? Object.keys(data).length : 0;
-      notifyParentMode(n);
-    });
-
-    toast('🔥 Online! Live-Sync aktiv.','ok');
-    notifyParentMode(1);
-  }catch(e){
-    console.error(e);
-    isOnline = false;
-    toast('Verbindungsfehler: '+e.message,'err');
-    goOffline(true);
+  } catch(e) {
+    toast('Verbindung fehlgeschlagen: ' + e.message, 'err');
+    return;
   }
+
+  isOnline = true;
+
+  // Presence registrieren
+  try { await fbPut('/manv/presence/' + MY_ID, {at: Date.now()}); } catch(e){}
+
+  // Beim Schließen/Reload: Presence + eigener Lock löschen
+  window.addEventListener('beforeunload', () => {
+    fbDel('/manv/presence/' + MY_ID, true);
+    if(editId) fbDel('/manv/editing/' + editId, true);
+  }, {once: true});
+
+  // Sofort ersten Poll, dann alle 2s
+  await pollAll();
+  pollTimer = setInterval(pollAll, 2000);
+
+  toast('🔥 Online — Live-Sync aktiv', 'ok');
 }
 
 function goOffline(silent=false){
+  isOnline = false;
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
   if(editId) releaseEditLock(editId);
-  fbUnlisten(sseP); sseP=null;
-  fbUnlisten(sseL); sseL=null;
-  fbUnlisten(window._ssePresence); window._ssePresence=null;
-  // Remove presence synchronously
-  fetch(FB_BASE+'/manv/presence/'+MY_ID+'.json', {method:'DELETE', keepalive:true}).catch(()=>{});
-  isOnline=false; editingLocks={};
-  if(!silent) toast('Lokaler Modus aktiv','info');
-  notifyParentMode(0);
+  fbDel('/manv/presence/' + MY_ID, true).catch(()=>{});
+  editingLocks = {};
+  updateLockBadges();
+  if(!silent) toast('Lokaler Modus aktiv', 'info');
+  notifyParent(0);
 }
 
-/* ── EDITING LOCKS ── */
-async function acquireEditLock(patId){
-  if(!isOnline||!patId)return;
-  try{ await fbSet('/manv/editing/'+patId, MY_ID); }catch(e){}
+/* ═══════════════════════════════════════════════════════════
+   POLLING — alle 3 Nodes auf einmal, alle 2s
+   Kein SSE, keine Race-Conditions, keine Pfad-Probleme
+   ═══════════════════════════════════════════════════════════ */
+async function pollAll(){
+  if(!isOnline) return;
+  try {
+    const [pData, presData, lockData] = await Promise.all([
+      fbGet('/manv/patients'),
+      fbGet('/manv/presence'),
+      fbGet('/manv/editing')
+    ]);
+
+    // ── Patienten ──────────────────────────────────────────
+    // pData ist entweder null oder { id: {vollständiges Patient-Objekt}, ... }
+    // Jeder Wert MUSS ein Objekt mit .id und .num sein (Schutz gegen Firebase-Feld-Iteration)
+    if(pData === null){
+      patients = [];
+      patN = 0;
+    } else {
+      const valid = Object.values(pData).filter(
+        v => v && typeof v === 'object' && typeof v.id === 'string' && typeof v.num === 'number'
+      );
+      patients = valid.sort((a,b) => a.num - b.num);
+      patN = patients.reduce((m,p) => Math.max(m, p.num), 0);
+    }
+    render();
+
+    // ── Presence / Teilnehmer ──────────────────────────────
+    const userCount = presData ? Object.keys(presData).length : 0;
+    notifyParent(userCount);
+
+    // ── Editing Locks ──────────────────────────────────────
+    editingLocks = lockData || {};
+    updateLockBadges();
+    updateModalLockWarning();
+
+  } catch(e){
+    console.error('Poll-Fehler:', e);
+  }
 }
-async function releaseEditLock(patId){
-  if(!isOnline||!patId)return;
-  try{ if(editingLocks[patId]===MY_ID) await fbDel('/manv/editing/'+patId); }catch(e){}
+
+/* ═══════════════════════════════════════════════════════════
+   EDITING LOCKS
+   Verhindert gleichzeitiges Bearbeiten:
+   - "Bearbeiten"-Button deaktiviert wenn gesperrt
+   - Karte orangefarben umrandet
+   - Modal zeigt Warnung wenn jemand anderes schon drin ist
+   ═══════════════════════════════════════════════════════════ */
+async function acquireEditLock(pid){
+  if(!isOnline || !pid) return;
+  try { await fbPut('/manv/editing/' + pid, MY_ID); } catch(e){}
 }
-function isLockedByOther(patId){
-  if(!isOnline)return false;
-  const l=editingLocks[patId];
-  return l && l!==MY_ID;
+async function releaseEditLock(pid){
+  if(!isOnline || !pid) return;
+  try {
+    if(editingLocks[pid] === MY_ID) await fbDel('/manv/editing/' + pid);
+  } catch(e){}
 }
+function isLockedByOther(pid){
+  if(!isOnline) return false;
+  const l = editingLocks[pid];
+  return !!(l && l !== MY_ID);
+}
+
 function updateLockBadges(){
-  document.querySelectorAll('.pat-card[data-pid]').forEach(card=>{
-    const pid=card.dataset.pid, locked=isLockedByOther(pid);
-    card.classList.toggle('being-edited',locked);
-    let badge=card.querySelector('.edit-lock-badge');
-    if(locked&&!badge){
-      badge=document.createElement('div');
-      badge.className='edit-lock-badge';
-      badge.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>In Bearbeitung';
+  document.querySelectorAll('.pat-card[data-pid]').forEach(card => {
+    const pid    = card.dataset.pid;
+    const locked = isLockedByOther(pid);
+    card.classList.toggle('being-edited', locked);
+
+    // Badge anzeigen/entfernen
+    let badge = card.querySelector('.edit-lock-badge');
+    if(locked && !badge){
+      badge = document.createElement('div');
+      badge.className = 'edit-lock-badge';
+      badge.textContent = '🔒 In Bearbeitung';
       card.appendChild(badge);
-    } else if(!locked&&badge){ badge.remove(); }
+    } else if(!locked && badge){
+      badge.remove();
+    }
+
+    // ── FIX: "Bearbeiten"-Button sperren wenn gesperrt ────
+    const editBtn = card.querySelector('.btn-edit');
+    if(editBtn){
+      editBtn.disabled = locked;
+      editBtn.style.opacity = locked ? '0.35' : '';
+      editBtn.style.cursor  = locked ? 'not-allowed' : '';
+      editBtn.title = locked ? 'Wird von anderem Nutzer bearbeitet' : '';
+    }
   });
 }
+
 function updateModalLockWarning(){
-  if(!editId)return;
-  const w=document.getElementById('lock-warning');
+  if(!editId) return;
+  const w = document.getElementById('lock-warning');
   if(w) w.classList.toggle('show', isLockedByOther(editId));
 }
 
-/* ── DB OPS ── */
-async function dbSet(p){
-  if(!isOnline)return;
-  try{ await fbSet('/manv/patients/'+p.id, p); }catch(e){toast('Sync-Fehler','err');}
+/* ═══════════════════════════════════════════════════════════
+   DB SCHREIB-OPS
+   ═══════════════════════════════════════════════════════════ */
+async function dbSave(p){
+  if(!isOnline) return;
+  try { await fbPut('/manv/patients/' + p.id, p); } catch(e){ toast('Sync-Fehler', 'err'); }
 }
-async function dbPushRealtimeFields(p){
-  if(!isOnline)return;
-  // Write full patient so SSE root-listener gets a clean complete object
-  try{ await fbSet('/manv/patients/'+p.id, p); }catch(e){toast('Sync-Fehler','err');}
-}
-async function dbDel(id){
-  if(!isOnline)return;
-  try{ await fbDel('/manv/patients/'+id); }catch(e){}
+async function dbDelete(id){
+  if(!isOnline) return;
+  try { await fbDel('/manv/patients/' + id); } catch(e){}
 }
 async function dbClear(){
-  if(!isOnline)return;
-  try{ await fbDel('/manv/patients'); }catch(e){}
+  if(!isOnline) return;
+  try { await fbDel('/manv/patients'); } catch(e){}
 }
 
-/* ── MED TABLE ── */
-function makeMedRow(med='',app='',time='',name=''){
-  const tr=document.createElement('tr');
-  tr.innerHTML='<td><input type="text" value="'+esc(med)+'" placeholder="Morphin 5mg" autocomplete="off"></td>'+
+/* ═══════════════════════════════════════════════════════════
+   MEDIKAMENTEN-TABELLE
+   ═══════════════════════════════════════════════════════════ */
+function makeMedRow(med='', app='', time='', name=''){
+  const tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><input type="text" value="'+esc(med)+'" placeholder="Morphin 5mg" autocomplete="off"></td>'+
     '<td><select class="vt-sel">'+MED_OPTS+'</select></td>'+
-    '<td><div class="vtc"><input type="text" value="'+esc(time)+'" placeholder="HH:MM" autocomplete="off"><button class="btn-now" onclick="setNowMed(this)">⏱</button></div></td>'+
+    '<td><div class="vtc"><input type="text" value="'+esc(time)+'" placeholder="HH:MM" autocomplete="off">'+
+    '<button class="btn-now" onclick="setNowMed(this)">⏱</button></div></td>'+
     '<td><input type="text" value="'+esc(name)+'" placeholder="Name" autocomplete="off"></td>';
-  if(app)tr.querySelector('select').value=app;
+  if(app) tr.querySelector('select').value = app;
   return tr;
 }
-function resetMed(){const tb=document.getElementById('med-tbody');tb.innerHTML='';tb.appendChild(makeMedRow());tb.appendChild(makeMedRow());}
-window.addMedRow=()=>document.getElementById('med-tbody').appendChild(makeMedRow());
-window.setNowMed=btn=>{const i=btn.previousElementSibling;if(i){const n=new Date();i.value=p2(n.getHours())+':'+p2(n.getMinutes());}};
+function resetMed(){
+  const tb = document.getElementById('med-tbody');
+  tb.innerHTML = '';
+  tb.appendChild(makeMedRow());
+  tb.appendChild(makeMedRow());
+}
+window.addMedRow  = () => document.getElementById('med-tbody').appendChild(makeMedRow());
+window.setNowMed  = btn => {
+  const i = btn.previousElementSibling;
+  if(i){ const n=new Date(); i.value=p2(n.getHours())+':'+p2(n.getMinutes()); }
+};
 function readMed(){
-  return[...document.querySelectorAll('#med-tbody tr')].map(tr=>{
-    const ins=tr.querySelectorAll('input[type=text]'),sel=tr.querySelector('select');
-    return{med:ins[0]?.value.trim()||'',app:sel?.value||'',time:ins[1]?.value.trim()||'',name:ins[2]?.value.trim()||''};
-  }).filter(r=>r.med||r.app||r.time||r.name);
+  return [...document.querySelectorAll('#med-tbody tr')].map(tr => {
+    const ins = tr.querySelectorAll('input[type=text]');
+    const sel = tr.querySelector('select');
+    return {med:ins[0]?.value.trim()||'', app:sel?.value||'', time:ins[1]?.value.trim()||'', name:ins[2]?.value.trim()||''};
+  }).filter(r => r.med || r.app || r.time || r.name);
 }
 function loadMed(rows){
-  const tb=document.getElementById('med-tbody');tb.innerHTML='';
-  if(!rows?.length){resetMed();return;}
-  rows.forEach(r=>tb.appendChild(makeMedRow(r.med,r.app,r.time,r.name)));
-  if(rows.length<2)for(let i=rows.length;i<2;i++)tb.appendChild(makeMedRow());
+  const tb = document.getElementById('med-tbody');
+  tb.innerHTML = '';
+  if(!rows?.length){ resetMed(); return; }
+  rows.forEach(r => tb.appendChild(makeMedRow(r.med, r.app, r.time, r.name)));
+  if(rows.length < 2) for(let i=rows.length; i<2; i++) tb.appendChild(makeMedRow());
 }
 
-/* ── DONE TOGGLE ── */
+/* ═══════════════════════════════════════════════════════════
+   TRANSPORT-STATUS
+   ═══════════════════════════════════════════════════════════ */
 function setDoneUI(v){
-  isDone=!!v;
-  const btn=document.getElementById('done-btn'),lbl=document.getElementById('done-lbl');
-  if(isDone){btn.style.cssText='background:rgba(82,183,136,.12);border-color:#52b788;color:#52b788;';lbl.textContent='Abtransportiert ✓';}
-  else{btn.style.cssText='';lbl.textContent='Nicht abtransportiert';}
+  isDone = !!v;
+  const btn = document.getElementById('done-btn');
+  const lbl = document.getElementById('done-lbl');
+  if(isDone){
+    btn.style.cssText = 'background:rgba(82,183,136,.12);border-color:#52b788;color:#52b788;';
+    lbl.textContent = 'Abtransportiert ✓';
+  } else {
+    btn.style.cssText = '';
+    lbl.textContent = 'Nicht abtransportiert';
+  }
 }
-window.toggleDone=()=>setDoneUI(!isDone);
+window.toggleDone = () => setDoneUI(!isDone);
 
-/* ── MODAL ── */
-window.openNew=()=>{
-  editId=null;activeCat=null;clearF();setDoneUI(false);
-  document.getElementById('m-title').innerHTML='Neuer <span>Patient</span>';
-  document.getElementById('m-sub').textContent='MANV · Triage · Dokumentation';
-  document.getElementById('exp-btn').style.display='none';
-  document.getElementById('m-stripe').style.background='#1e2a3a';
+/* ═══════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════ */
+window.openNew = () => {
+  editId = null; activeCat = null; clearF(); setDoneUI(false);
+  document.getElementById('m-title').innerHTML = 'Neuer <span>Patient</span>';
+  document.getElementById('m-sub').textContent = 'MANV · Triage · Dokumentation';
+  document.getElementById('exp-btn').style.display = 'none';
+  document.getElementById('m-stripe').style.background = '#1e2a3a';
   document.getElementById('lock-warning').classList.remove('show');
   document.getElementById('modal-ov').classList.add('open');
-  document.querySelector('.modal-body').scrollTop=0;
+  document.querySelector('.modal-body').scrollTop = 0;
 };
-window.openEdit=id=>{
-  const p=patients.find(x=>x.id===id);if(!p)return;
-  editId=id;activeCat=p.cat;loadF(p);setDoneUI(p.done||false);
-  document.getElementById('m-title').innerHTML='Patient <span>#'+pad(p.num)+'</span>';
-  document.getElementById('m-sub').textContent=p.name||'Unbekannt';
-  document.getElementById('exp-btn').style.display='flex';
-  document.getElementById('m-stripe').style.background=p.cat?CAT[p.cat].color:'#1e2a3a';
+
+window.openEdit = id => {
+  // ── FIX: gesperrte Karten können NICHT geöffnet werden ──
+  if(isLockedByOther(id)){
+    toast('Wird gerade von jemand anderem bearbeitet!', 'err');
+    return;
+  }
+  const p = patients.find(x => x.id === id);
+  if(!p) return;
+  editId = id; activeCat = p.cat; loadF(p); setDoneUI(p.done || false);
+  document.getElementById('m-title').innerHTML = 'Patient <span>#' + pad(p.num) + '</span>';
+  document.getElementById('m-sub').textContent = p.name || 'Unbekannt';
+  document.getElementById('exp-btn').style.display = 'flex';
+  document.getElementById('m-stripe').style.background = p.cat ? CAT[p.cat].color : '#1e2a3a';
   updateModalLockWarning();
   document.getElementById('modal-ov').classList.add('open');
   acquireEditLock(id);
 };
-window.closeModal=()=>{
-  if(editId)releaseEditLock(editId);
+
+window.closeModal = () => {
+  if(editId) releaseEditLock(editId);
   document.getElementById('modal-ov').classList.remove('open');
   document.getElementById('lock-warning').classList.remove('show');
-  editId=null;
-};
-window.ovClick=e=>{if(e.target===document.getElementById('modal-ov'))window.closeModal();};
-window.pickCat=c=>{
-  activeCat=c;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
-  document.getElementById('cb-'+c).classList.add('sel');
-  document.getElementById('m-stripe').style.background=CAT[c].color;
+  editId = null;
 };
 
-/* ── FORM ── */
+window.ovClick = e => {
+  if(e.target === document.getElementById('modal-ov')) window.closeModal();
+};
+
+// Triage-Kategorie wählen — pickCat um jeden Namenskonflikt zu vermeiden
+window.pickCat = c => {
+  activeCat = c;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('cb-' + c).classList.add('sel');
+  document.getElementById('m-stripe').style.background = CAT[c].color;
+};
+
+/* ═══════════════════════════════════════════════════════════
+   FORMULAR LESEN / SCHREIBEN
+   ═══════════════════════════════════════════════════════════ */
 function clearF(){
-  TXT.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  SEL.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  Object.keys(CB_MAP).forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
+  TXT.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  SEL.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  Object.keys(CB_MAP).forEach(id => { const el=document.getElementById(id); if(el) el.checked=false; });
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('sel'));
   resetMed();
 }
 function loadF(p){
-  TXT.forEach(id=>{const el=document.getElementById(id);if(el)el.value=p[id]||'';});
-  SEL.forEach(id=>{const el=document.getElementById(id);if(el)el.value=p[id]||'';});
-  Object.keys(CB_MAP).forEach(id=>{const el=document.getElementById(id);if(el)el.checked=(p.checks||[]).includes(id);});
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
-  if(p.cat){const cb=document.getElementById('cb-'+p.cat);if(cb)cb.classList.add('sel');}
-  loadMed(p.medRows||[]);
+  TXT.forEach(id => { const el=document.getElementById(id); if(el) el.value=p[id]||''; });
+  SEL.forEach(id => { const el=document.getElementById(id); if(el) el.value=p[id]||''; });
+  Object.keys(CB_MAP).forEach(id => { const el=document.getElementById(id); if(el) el.checked=(p.checks||[]).includes(id); });
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('sel'));
+  if(p.cat){ const cb=document.getElementById('cb-'+p.cat); if(cb) cb.classList.add('sel'); }
+  loadMed(p.medRows || []);
 }
 function readF(){
-  const gv=id=>(document.getElementById(id)?.value.trim()||'');
-  const checks=Object.keys(CB_MAP).filter(id=>document.getElementById(id)?.checked);
-  const obj={cat:activeCat,checks,done:isDone,medRows:readMed()};
-  TXT.forEach(id=>obj[id]=gv(id));
-  SEL.forEach(id=>obj[id]=gv(id));
-  obj.name=obj['f-name'];obj.dob=obj['f-dob'];obj.sex=obj['f-sex'];
-  obj.fundort=obj['f-fundort'];obj.findtime=obj['f-findtime'];
-  obj.puls=obj['f-puls'];obj.rr=obj['f-rr'];obj.spo2=obj['f-spo2'];
-  obj.gcs=obj['f-gcs'];obj.hauptv=obj['f-hauptv'];obj.befund=obj['f-befund'];
-  obj.massnahmen=checks.map(id=>CB_MAP[id]);
+  const gv = id => (document.getElementById(id)?.value.trim() || '');
+  const checks = Object.keys(CB_MAP).filter(id => document.getElementById(id)?.checked);
+  const obj = {cat:activeCat, checks, done:isDone, medRows:readMed()};
+  TXT.forEach(id => obj[id] = gv(id));
+  SEL.forEach(id => obj[id] = gv(id));
+  obj.name     = obj['f-name'];
+  obj.dob      = obj['f-dob'];
+  obj.sex      = obj['f-sex'];
+  obj.fundort  = obj['f-fundort'];
+  obj.findtime = obj['f-findtime'];
+  obj.puls     = obj['f-puls'];
+  obj.rr       = obj['f-rr'];
+  obj.spo2     = obj['f-spo2'];
+  obj.gcs      = obj['f-gcs'];
+  obj.hauptv   = obj['f-hauptv'];
+  obj.befund   = obj['f-befund'];
+  obj.massnahmen = checks.map(id => CB_MAP[id]);
   return obj;
 }
 
-window.savePatient=async()=>{
-  if(!activeCat){toast('Bitte Triage-Kategorie wählen!','err');return;}
-  const data=readF(),ts=stamp();
+window.savePatient = async () => {
+  if(!activeCat){ toast('Bitte Triage-Kategorie wählen!', 'err'); return; }
+  const data = readF();
+  const ts   = stamp();
   let saved;
   if(editId){
-    const i=patients.findIndex(p=>p.id===editId);
-    if(i>=0){patients[i]={...patients[i],...data,updatedAt:ts};saved=patients[i];}
-    toast('Patient gespeichert','ok');
-  }else{
+    const i = patients.findIndex(p => p.id === editId);
+    if(i >= 0){ patients[i] = {...patients[i], ...data, updatedAt:ts}; saved = patients[i]; }
+    toast('Patient gespeichert', 'ok');
+  } else {
     patN++;
-    saved={id:uid(),num:patN,createdAt:ts,updatedAt:ts,...data};
+    saved = {id:uid(), num:patN, createdAt:ts, updatedAt:ts, ...data};
     patients.push(saved);
-    toast('Patient erfasst','ok');
+    toast('Patient erfasst', 'ok');
   }
-  if(editId)await releaseEditLock(editId);
+  if(editId) await releaseEditLock(editId);
   window.closeModal();
-  if(saved)await dbSet(saved);
-  if(!isOnline)render();
+  if(saved) await dbSave(saved);   // schreibt komplettes Objekt → pollAll bekommt saubere Daten
+  if(!isOnline) render();
 };
 
-window.quickDone=async(id,e)=>{
+window.quickDone = async (id, e) => {
   e.stopPropagation();
-  const i=patients.findIndex(p=>p.id===id);if(i<0)return;
-  patients[i].done=!patients[i].done;patients[i].updatedAt=stamp();
-  toast(patients[i].done?'Abtransportiert ✓':'Zurückgesetzt','ok');
-  if(isOnline){ await dbPushRealtimeFields(patients[i]); }
-  else render();
+  const i = patients.findIndex(p => p.id === id);
+  if(i < 0) return;
+  patients[i].done     = !patients[i].done;
+  patients[i].updatedAt = stamp();
+  toast(patients[i].done ? 'Abtransportiert ✓' : 'Zurückgesetzt', 'ok');
+  await dbSave(patients[i]);
+  if(!isOnline) render();
 };
 
-/* ── FILTER ── */
-window.setCat=v=>{
-  catF=v;
-  document.querySelectorAll('[id^="fc-"]').forEach(t=>t.classList.remove('active'));
-  document.getElementById('fc-'+v).classList.add('active');
+/* ═══════════════════════════════════════════════════════════
+   FILTER
+   ═══════════════════════════════════════════════════════════ */
+window.setCat = v => {
+  catF = v;
+  document.querySelectorAll('[id^="fc-"]').forEach(t => t.classList.remove('active'));
+  document.getElementById('fc-' + v).classList.add('active');
   render();
 };
-window.setTr=v=>{
-  trF=v;
-  document.querySelectorAll('[id^="ft-"]').forEach(t=>t.classList.remove('active'));
-  document.getElementById('ft-'+v).classList.add('active');
+window.setTr = v => {
+  trF = v;
+  document.querySelectorAll('[id^="ft-"]').forEach(t => t.classList.remove('active'));
+  document.getElementById('ft-' + v).classList.add('active');
   render();
 };
 function getVis(){
-  const q=(document.getElementById('si')?.value||'').toLowerCase().trim();
-  return patients.filter(p=>{
-    if(catF!=='all'&&p.cat!==catF)return false;
-    if(trF==='done'&&!p.done)return false;
-    if(trF==='open'&&p.done)return false;
-    if(q&&!(p.name||'').toLowerCase().includes(q))return false;
+  const q = (document.getElementById('si')?.value || '').toLowerCase().trim();
+  return patients.filter(p => {
+    if(catF !== 'all' && p.cat !== catF) return false;
+    if(trF === 'done' && !p.done)        return false;
+    if(trF === 'open' &&  p.done)        return false;
+    if(q && !(p.name||'').toLowerCase().includes(q)) return false;
     return true;
   });
 }
 
-/* ── RENDER ── */
+/* ═══════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════ */
 function render(){
   stats();
-  const list=document.getElementById('plist');list.innerHTML='';
-  const vis=getVis();
-  const empty=document.getElementById('empty'),grid=document.getElementById('grid');
-  if(!patients.length){empty.style.display='flex';grid.style.display='none';}
-  else{empty.style.display='none';grid.style.display='grid';}
-  vis.forEach(p=>{
-    const m=p.cat?CAT[p.cat]:{color:'var(--dim)',label:'?',roman:'?',bg:'transparent'};
-    const li=document.createElement('div');
-    li.className='pl-item'+(p.done?' done':'');
-    li.onclick=()=>window.openEdit(p.id);
-    li.innerHTML='<div class="pl-bar" style="background:'+(p.done?'var(--grn)':m.color)+'"></div>'+
-      '<div class="pl-info"><div class="pl-num">#'+pad(p.num)+'</div>'+
-      '<div class="pl-name'+(p.name?'':' unk')+'">'+(p.name||'Unbekannt')+'</div>'+
-      '<div class="pl-sub">'+(p.fundort||'—')+' · '+(p.createdAt||'')+'</div></div>'+
-      (p.done?'<span class="pl-badge" style="background:rgba(82,183,136,.12);color:var(--grn);border:1px solid rgba(82,183,136,.3)">✓ Trans.</span>':
-              '<span class="pl-badge" style="background:'+m.bg+';color:'+m.color+';border:1px solid '+m.color+'33">'+m.roman+'</span>');
+  const list = document.getElementById('plist');
+  list.innerHTML = '';
+  const vis   = getVis();
+  const empty = document.getElementById('empty');
+  const grid  = document.getElementById('grid');
+  empty.style.display = patients.length ? 'none'  : 'flex';
+  grid.style.display  = patients.length ? 'grid'  : 'none';
+
+  vis.forEach(p => {
+    const m = p.cat ? CAT[p.cat] : {color:'var(--dim)', label:'?', roman:'?', bg:'transparent'};
+    const li = document.createElement('div');
+    li.className = 'pl-item' + (p.done ? ' done' : '');
+    li.onclick = () => window.openEdit(p.id);
+    li.innerHTML =
+      '<div class="pl-bar" style="background:'+(p.done?'var(--grn)':m.color)+'"></div>'+
+      '<div class="pl-info">'+
+        '<div class="pl-num">#'+pad(p.num)+'</div>'+
+        '<div class="pl-name'+(p.name?'':' unk')+'">'+(p.name||'Unbekannt')+'</div>'+
+        '<div class="pl-sub">'+(p.fundort||'—')+' · '+(p.createdAt||'')+'</div>'+
+      '</div>'+
+      (p.done
+        ? '<span class="pl-badge" style="background:rgba(82,183,136,.12);color:var(--grn);border:1px solid rgba(82,183,136,.3)">✓ Trans.</span>'
+        : '<span class="pl-badge" style="background:'+m.bg+';color:'+m.color+';border:1px solid '+m.color+'33">'+m.roman+'</span>');
     list.appendChild(li);
   });
-  grid.innerHTML='';
-  vis.forEach(p=>grid.appendChild(buildCard(p)));
+
+  grid.innerHTML = '';
+  vis.forEach(p => grid.appendChild(buildCard(p)));
   updateLockBadges();
 }
 
 function buildCard(p){
-  const m=p.cat?CAT[p.cat]:{color:'var(--dim)',bg:'transparent',label:'?',roman:'?'};
-  const el=document.createElement('div');
-  el.className='pat-card'+(p.done?' done':'');
-  el.dataset.pid=p.id;
-  const tags=(p.massnahmen||[]).slice(0,3).map(t=>'<span class="ptag" style="background:rgba(72,149,239,.1);color:#4895ef;border:1px solid rgba(72,149,239,.2)">'+t+'</span>').join('');
-  const doneBar=p.done?'<div class="done-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>Abtransportiert — Abgeschlossen</div>':'';
-  el.innerHTML=doneBar+
+  const m  = p.cat ? CAT[p.cat] : {color:'var(--dim)', bg:'transparent', label:'?', roman:'?'};
+  const el = document.createElement('div');
+  el.className   = 'pat-card' + (p.done ? ' done' : '');
+  el.dataset.pid = p.id;
+
+  const tags = (p.massnahmen||[]).slice(0,3)
+    .map(t => '<span class="ptag" style="background:rgba(72,149,239,.1);color:#4895ef;border:1px solid rgba(72,149,239,.2)">'+t+'</span>')
+    .join('');
+  const doneBar = p.done
+    ? '<div class="done-stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>Abtransportiert</div>'
+    : '';
+
+  // ── FIX: btn-edit Klasse für Lock-Blocking ────────────
+  const editBtnDisabled = isLockedByOther(p.id) ? ' disabled style="opacity:.35;cursor:not-allowed"' : '';
+
+  el.innerHTML = doneBar +
     '<div class="pat-head" onclick="openEdit(\''+p.id+'\')">'+
-    '<div class="pat-stripe" style="background:'+(p.done?'var(--grn)':m.color)+'"></div>'+
-    '<div class="pat-numbox"><div class="pat-num">'+pad(p.num)+'</div><div class="pat-num-lbl">Pat-Nr</div></div>'+
-    '<div class="pat-info"><div class="pat-name'+(p.name?'':' unk')+'">'+(p.name||'Unbekannt')+'</div>'+
-    '<div class="pat-dob">'+[p.dob,p.sex,p.fundort].filter(Boolean).join(' · ')+'</div></div>'+
-    '<div class="pat-catbox" style="background:'+m.bg+'">'+
-    '<div class="pat-roman" style="color:'+(p.done?'var(--grn)':m.color)+'">'+m.roman+'</div>'+
-    '<div class="pat-catlbl" style="color:'+(p.done?'var(--grn)':m.color)+'">'+m.label+'</div></div></div>'+
-    '<div class="pat-body"><div class="vitals">'+
-    '<div class="vc"><div class="vc-l">GCS</div><div class="vc-v">'+(p.gcs||'—')+'</div></div>'+
-    '<div class="vc"><div class="vc-l">SpO₂</div><div class="vc-v">'+(p.spo2?p.spo2+'%':'—')+'</div></div>'+
-    '<div class="vc"><div class="vc-l">Puls</div><div class="vc-v">'+(p.puls?p.puls+'/min':'—')+'</div></div>'+
-    '<div class="vc"><div class="vc-l">RR</div><div class="vc-v">'+(p.rr||'—')+'</div></div></div>'+
-    '<div class="pat-diag'+((!p.hauptv&&!p.befund)?' empty':'')+'">'+
-    (p.hauptv?'<b style="color:var(--white)">'+p.hauptv+'</b>'+(p.befund?' — ':''):'')+
-    (p.befund||(p.hauptv?'':'Keine Beschreibung erfasst'))+'</div></div>'+
+      '<div class="pat-stripe" style="background:'+(p.done?'var(--grn)':m.color)+'"></div>'+
+      '<div class="pat-numbox"><div class="pat-num">'+pad(p.num)+'</div><div class="pat-num-lbl">Pat-Nr</div></div>'+
+      '<div class="pat-info">'+
+        '<div class="pat-name'+(p.name?'':' unk')+'">'+(p.name||'Unbekannt')+'</div>'+
+        '<div class="pat-dob">'+[p.dob,p.sex,p.fundort].filter(Boolean).join(' · ')+'</div>'+
+      '</div>'+
+      '<div class="pat-catbox" style="background:'+m.bg+'">'+
+        '<div class="pat-roman" style="color:'+(p.done?'var(--grn)':m.color)+'">'+m.roman+'</div>'+
+        '<div class="pat-catlbl" style="color:'+(p.done?'var(--grn)':m.color)+'">'+m.label+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="pat-body">'+
+      '<div class="vitals">'+
+        '<div class="vc"><div class="vc-l">GCS</div><div class="vc-v">'+(p.gcs||'—')+'</div></div>'+
+        '<div class="vc"><div class="vc-l">SpO₂</div><div class="vc-v">'+(p.spo2?p.spo2+'%':'—')+'</div></div>'+
+        '<div class="vc"><div class="vc-l">Puls</div><div class="vc-v">'+(p.puls?p.puls+'/min':'—')+'</div></div>'+
+        '<div class="vc"><div class="vc-l">RR</div><div class="vc-v">'+(p.rr||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="pat-diag'+((!p.hauptv&&!p.befund)?' empty':'')+'">'+
+        (p.hauptv ? '<b style="color:var(--white)">'+p.hauptv+'</b>'+(p.befund?' — ':'') : '')+
+        (p.befund || (p.hauptv ? '' : 'Keine Beschreibung erfasst'))+
+      '</div>'+
+    '</div>'+
     '<div class="pat-foot">'+
-    '<div class="pat-ftime">'+(p.findtime?'⏱ '+p.findtime:'')+' '+(p.createdAt?'· '+p.createdAt:'')+'</div>'+
-    '<div class="pat-tags">'+tags+((p.massnahmen||[]).length>3?'<span class="ptag" style="background:var(--sf3);color:var(--dim)">+'+(p.massnahmen.length-3)+'</span>':'')+'</div>'+
-    '<div class="pat-actions">'+
-    (p.done?'<button class="cbtn ab" onclick="quickDone(\''+p.id+'\',event)">↺ Aktiv</button>':
-            '<button class="cbtn gb" onclick="quickDone(\''+p.id+'\',event)">✓ Abtr.</button>')+
-    '<button class="cbtn" onclick="event.stopPropagation();expById(\''+p.id+'\')">↓</button>'+
-    '<button class="cbtn" onclick="event.stopPropagation();delPat(\''+p.id+'\')" style="color:var(--red)">✕</button>'+
-    '<button class="cbtn" onclick="openEdit(\''+p.id+'\')">Bearbeiten</button>'+
-    '</div></div>';
+      '<div class="pat-ftime">'+(p.findtime?'⏱ '+p.findtime:'')+' '+(p.createdAt?'· '+p.createdAt:'')+'</div>'+
+      '<div class="pat-tags">'+tags+((p.massnahmen||[]).length>3?'<span class="ptag" style="background:var(--sf3);color:var(--dim)">+'+(p.massnahmen.length-3)+'</span>':'')+'</div>'+
+      '<div class="pat-actions">'+
+        (p.done
+          ? '<button class="cbtn ab" onclick="quickDone(\''+p.id+'\',event)">↺ Aktiv</button>'
+          : '<button class="cbtn gb" onclick="quickDone(\''+p.id+'\',event)">✓ Abtr.</button>')+
+        '<button class="cbtn" onclick="event.stopPropagation();expById(\''+p.id+'\')">↓</button>'+
+        '<button class="cbtn" onclick="event.stopPropagation();delPat(\''+p.id+'\')" style="color:var(--red)">✕</button>'+
+        '<button class="cbtn btn-edit" onclick="openEdit(\''+p.id+'\')"'+editBtnDisabled+'>Bearbeiten</button>'+
+      '</div>'+
+    '</div>';
   return el;
 }
 
 function stats(){
-  const c={I:0,II:0,III:0,IV:0,X:0};let done=0,open=0;
-  patients.forEach(p=>{if(p.cat&&c[p.cat]!==undefined)c[p.cat]++;p.done?done++:open++;});
-  const s=id=>document.getElementById(id);
-  s('n-all').textContent=patients.length;
-  ['I','II','III','IV','X'].forEach(k=>s('n-'+k).textContent=c[k]);
-  s('nt-all').textContent=patients.length;s('nt-open').textContent=open;s('nt-done').textContent=done;
-  try{window.parent.postMessage({type:'manv-stats',total:patients.length,...c},'*');}catch(e){}
+  const c = {I:0,II:0,III:0,IV:0,X:0};
+  let done=0, open=0;
+  patients.forEach(p => {
+    if(p.cat && c[p.cat] !== undefined) c[p.cat]++;
+    p.done ? done++ : open++;
+  });
+  const s = id => document.getElementById(id);
+  s('n-all').textContent = patients.length;
+  ['I','II','III','IV','X'].forEach(k => s('n-'+k).textContent = c[k]);
+  s('nt-all').textContent  = patients.length;
+  s('nt-open').textContent = open;
+  s('nt-done').textContent = done;
+  try{ window.parent.postMessage({type:'manv-stats', total:patients.length, ...c}, '*'); }catch(e){}
 }
 
-/* ── EXPORT / IMPORT ── */
+/* ═══════════════════════════════════════════════════════════
+   EXPORT / IMPORT / LÖSCHEN
+   ═══════════════════════════════════════════════════════════ */
 function expAll(){
-  if(!patients.length){toast('Keine Patienten','err');return;}
-  dl({version:1,type:'manv-full',patN,patients,at:new Date().toLocaleString('de-DE')},'MANV_Alle.manv');
-  toast(patients.length+' Patienten exportiert','ok');
+  if(!patients.length){ toast('Keine Patienten', 'err'); return; }
+  dl({version:1, type:'manv-full', patN, patients, at:new Date().toLocaleString('de-DE')}, 'MANV_Alle.manv');
+  toast(patients.length + ' Patienten exportiert', 'ok');
 }
-window.exportSingle=()=>editId&&expById(editId);
-window.expById=id=>{
-  const p=patients.find(x=>x.id===id);if(!p)return;
-  dl({version:1,type:'manv-single',patients:[p]},'MANV_Pat_'+pad(p.num)+'_Kat'+(p.cat||'?')+'.manv');
-  toast('Patient #'+pad(p.num)+' exportiert','ok');
+window.exportSingle = () => editId && expById(editId);
+window.expById = id => {
+  const p = patients.find(x => x.id===id); if(!p) return;
+  dl({version:1, type:'manv-single', patients:[p]}, 'MANV_Pat_'+pad(p.num)+'_Kat'+(p.cat||'?')+'.manv');
+  toast('Patient #'+pad(p.num)+' exportiert', 'ok');
 };
-function dl(obj,fn){
-  const b=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+function dl(obj, fn){
+  const b = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = fn; a.click();
+  URL.revokeObjectURL(a.href);
 }
 function importData(input){
-  const file=input.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=async e=>{try{const d=JSON.parse(e.target.result);if(!d.version||!d.patients)throw 0;await doImport(d);}catch(e){toast('Ungültige Datei','err');}};
-  r.readAsText(file);input.value='';
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = async e => {
+    try{ const d=JSON.parse(e.target.result); if(!d.version||!d.patients)throw 0; await doImport(d); }
+    catch(e){ toast('Ungültige Datei', 'err'); }
+  };
+  r.readAsText(file); input.value = '';
 }
 async function doImport(data){
-  const cnt=data.patients.length;
-  if(data.type==='manv-full'){
+  const cnt = data.patients.length;
+  if(data.type === 'manv-full'){
     if(!confirm('Vollständig importieren?\n'+patients.length+' aktuelle → '+cnt+' importierte ersetzen.'))return;
-    patients=data.patients;patN=data.patN||Math.max(0,...patients.map(p=>p.num||0));
-    if(isOnline){await dbClear();for(const p of patients)await dbSet(p);}
-  }else{
+    patients = data.patients;
+    patN = data.patN || Math.max(0, ...patients.map(p=>p.num||0));
+    if(isOnline){ await dbClear(); for(const p of patients) await dbSave(p); }
+  } else {
     for(const np of data.patients){
-      const i=patients.findIndex(p=>p.id===np.id);
-      if(i>=0)patients[i]=np;else{patN=Math.max(patN,np.num||0);patients.push(np);}
-      if(isOnline)await dbSet(np);
+      const i = patients.findIndex(p => p.id===np.id);
+      if(i>=0) patients[i]=np; else { patN=Math.max(patN,np.num||0); patients.push(np); }
+      if(isOnline) await dbSave(np);
     }
   }
-  toast(cnt+' Patient(en) importiert'+(isOnline?' — für alle sichtbar':''),'ok');
-  if(!isOnline)render();
+  toast(cnt+' Patient(en) importiert'+(isOnline?' — für alle sichtbar':''), 'ok');
+  if(!isOnline) render();
 }
-window.delPat=async id=>{
-  if(!confirm('Patient löschen?'))return;
-  patients=patients.filter(p=>p.id!==id);
-  await dbDel(id);
-  if(!isOnline)render();
-  toast('Gelöscht','ok');
+window.delPat = async id => {
+  if(!confirm('Patient löschen?')) return;
+  patients = patients.filter(p => p.id !== id);
+  await dbDelete(id);
+  if(!isOnline) render();
+  toast('Gelöscht', 'ok');
 };
 async function confirmClearAll(){
-  if(isOnline){toast('Im Online-Modus deaktiviert','err');return;}
-  if(!patients.length){toast('Keine Patienten','err');return;}
-  if(!confirm('Alle '+patients.length+' Patienten löschen?\nNicht rückgängig!'))return;
-  patients=[];patN=0;render();
-  toast('Alle gelöscht','ok');
+  if(isOnline){ toast('Im Online-Modus deaktiviert', 'err'); return; }
+  if(!patients.length){ toast('Keine Patienten', 'err'); return; }
+  if(!confirm('Alle '+patients.length+' Patienten löschen?\nNicht rückgängig!')) return;
+  patients=[]; patN=0; render();
+  toast('Alle gelöscht', 'ok');
 }
 
-/* ── UTILS ── */
-window.setNow=id=>{const el=document.getElementById(id);if(!el)return;const n=new Date();el.value=p2(n.getHours())+':'+p2(n.getMinutes());el.focus();};
-function uid(){return'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
-function pad(n){return String(n).padStart(3,'0');}
-function p2(n){return String(n).padStart(2,'0');}
-function stamp(){const n=new Date();return p2(n.getHours())+':'+p2(n.getMinutes());}
-function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function toast(msg,type){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
-  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2800);
+/* ═══════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════ */
+window.setNow = id => {
+  const el = document.getElementById(id); if(!el) return;
+  const n = new Date(); el.value = p2(n.getHours())+':'+p2(n.getMinutes()); el.focus();
+};
+function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function pad(n){ return String(n).padStart(3,'0'); }
+function p2(n){  return String(n).padStart(2,'0'); }
+function stamp(){ const n=new Date(); return p2(n.getHours())+':'+p2(n.getMinutes()); }
+function esc(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className='toast', 2800);
 }
 
-/* ── POSTMESSAGE ── */
-window.addEventListener('message',e=>{
-  const d=e.data;if(!d||d.target!=='manv')return;
-  if(d.fn==='openNewPatient')window.openNew();
-  if(d.fn==='exportAll')expAll();
-  if(d.fn==='doPrint')window.print();
-  if(d.fn==='confirmClearAll')confirmClearAll();
-  if(d.fn==='importFromParent'&&d.arg)try{doImport(JSON.parse(d.arg))}catch(e){toast('Ungültige Datei','err');}
-  if(d.fn==='toggleMode')window.handleModeSwitch();
+/* ═══════════════════════════════════════════════════════════
+   POSTMESSAGE (von index.html)
+   ═══════════════════════════════════════════════════════════ */
+window.addEventListener('message', e => {
+  const d = e.data; if(!d || d.target !== 'manv') return;
+  if(d.fn === 'openNewPatient')  window.openNew();
+  if(d.fn === 'exportAll')       expAll();
+  if(d.fn === 'doPrint')         window.print();
+  if(d.fn === 'confirmClearAll') confirmClearAll();
+  if(d.fn === 'importFromParent' && d.arg) try{ doImport(JSON.parse(d.arg)); }catch(e){ toast('Ungültige Datei','err'); }
+  if(d.fn === 'toggleMode')      window.handleModeSwitch();
 });
-window.exportAll=expAll;
-window.importData=importData;
-window.confirmClearAll=confirmClearAll;
+window.exportAll       = expAll;
+window.importData      = importData;
+window.confirmClearAll = confirmClearAll;
 
-/* ── INIT ── */
+/* ═══════════════════════════════════════════════════════════
+   INIT — immer im lokalen Modus starten
+   ═══════════════════════════════════════════════════════════ */
 resetMed();
 render();
-notifyParentMode(0);
+notifyParent(0);
 </script>
 </body>
 </html>
