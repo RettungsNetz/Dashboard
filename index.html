@@ -211,6 +211,7 @@ header {
 .module-card:hover::before { transform: scaleX(1); }
 .module-card[data-accent="red"] { --card-accent: var(--red); }
 .module-card[data-accent="blu"] { --card-accent: var(--blu); }
+.module-card[data-accent="orange"] { --card-accent: var(--amb); }
 .mc-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
 .mc-icon-wrap { width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--sf3); border: 1px solid var(--bd); font-size: 20px; }
 .mc-meta { flex: 1; }
@@ -517,29 +518,29 @@ header {
               <button class="mc-open-btn">Öffnen →</button>
             </div>
           </div>
-          <div class="module-card" data-accent="blu" onclick="openTool('fahrzeug')">
+          <div class="module-card" data-accent="orange" onclick="openTool('atemschutz')">
             <div class="mc-header">
-              <div class="mc-icon-wrap">🚑</div>
+              <div class="mc-icon-wrap">🫁</div>
               <div class="mc-meta">
-                <div class="mc-tag">Modul 03 · Planung</div>
-                <div class="mc-title">Fahrzeug-Planer</div>
+                <div class="mc-tag">Modul 03 · Atemschutz</div>
+                <div class="mc-title">Atemschutzüberwachung</div>
               </div>
             </div>
-            <div class="mc-desc">Interaktiver Lageplan für Einsatzfahrzeuge. Stellplätze anlegen, Fahrzeuge positionieren, Besatzung eintragen und Pläne exportieren.</div>
+            <div class="mc-desc">Überwachungstafel für Atemschutzgeräteträger. Trupps, Druckmeldungen, Countdown-Timer und Statusübersicht für den Atemschutzeinsatz.</div>
             <div class="mc-footer">
               <span class="mc-status">Bereit</span>
               <button class="mc-open-btn">Öffnen →</button>
             </div>
           </div>
-          <div class="module-card" data-accent="red" onclick="openTool('atemschutz')">
+          <div class="module-card" data-accent="blu" onclick="openTool('fahrzeug')">
             <div class="mc-header">
-              <div class="mc-icon-wrap">🫁</div>
+              <div class="mc-icon-wrap">🚑</div>
               <div class="mc-meta">
-                <div class="mc-tag">Modul 04 · Atemschutz</div>
-                <div class="mc-title">Atemschutzüberwachung</div>
+                <div class="mc-tag">Modul 04 · Planung</div>
+                <div class="mc-title">Fahrzeug-Planer</div>
               </div>
             </div>
-            <div class="mc-desc">Überwachungstafel für Atemschutzgeräteträger. Trupps, Druckmeldungen, Countdown-Timer und Statusübersicht für den Atemschutzeinsatz.</div>
+            <div class="mc-desc">Interaktiver Lageplan für Einsatzfahrzeuge. Stellplätze anlegen, Fahrzeuge positionieren, Besatzung eintragen und Pläne exportieren.</div>
             <div class="mc-footer">
               <span class="mc-status">Bereit</span>
               <button class="mc-open-btn">Öffnen →</button>
