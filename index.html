@@ -197,7 +197,7 @@ header {
 .hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--red); display: inline-block; }
 .hero-title { font-family: var(--cond); font-size: 48px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: var(--white); line-height: 1; margin-bottom: 8px; }
 .hero-title em { color: var(--red); font-style: normal; }
-.hero-sub { font-family: var(--sans); font-size: 13px; font-weight: 300; color: var(--txt2); letter-spacing: .5px; max-width: 480px; }
+.hero-sub { font-family: var(--sans); font-size: 13px; font-weight: 300; color: var(--txt); letter-spacing: .5px; max-width: 480px; }
 
 .modules-section { padding: 28px 40px; }
 .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -655,9 +655,9 @@ header {
         </div>
       </div>
       <div class="sysinfo-grid">
-        <div class="sysinfo-cell"><span class="sysinfo-label">Verfügbare Module</span><span class="sysinfo-val">5</span><span class="sysinfo-note">Schnell · Einfach · Kompakt</span></div>
-        <div class="sysinfo-cell"><span class="sysinfo-label">Plattform</span><span class="sysinfo-val">Web</span><span class="sysinfo-note">Browser-basiert · Offline-fähig</span></div>
+        <div class="sysinfo-cell"><span class="sysinfo-label">Verfügbare Module</span><span class="sysinfo-val">5</span><span class="sysinfo-note">Praxisnah · Direkt · Leicht</span></div>
         <div class="sysinfo-cell"><span class="sysinfo-label">Version</span><span class="sysinfo-val">1.0</span><span class="sysinfo-note">Build 2026.03</span></div>
+        <div class="sysinfo-cell"><span class="sysinfo-label">Letztes Update</span><span class="sysinfo-val" id="last-update-date">12.03.2026</span><span class="sysinfo-note" id="last-update-note">Patch · UI · Bugfixes</span></div>
       </div>
     </div>
 
@@ -1120,6 +1120,22 @@ function manvUpdateModeUI(online, users) {
     origOpen(tool);
     bl.classList.remove('active');
   };
+})();
+
+// GitHub letztes Update
+(async () => {
+  try {
+    const res = await fetch('https://api.github.com/repos/RettungsNetz/Dashboard/commits?per_page=1');
+    if (!res.ok) return;
+    const [commit] = await res.json();
+    const date = new Date(commit.commit.author.date);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    document.getElementById('last-update-date').textContent = `${day}.${month}.${year}`;
+    const msg = commit.commit.message.split('\n')[0];
+    document.getElementById('last-update-note').textContent = msg;
+  } catch (e) { /* Fallback: statische Werte bleiben */ }
 })();
 
 </script>

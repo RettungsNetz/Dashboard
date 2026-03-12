@@ -310,7 +310,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g1)
     <div class="ph-key" style="color:#1A6B9A">SAMPLER</div>
     <div>
       <div class="ph-title">SAMPLER-Schema — Strukturierte Anamnese</div>
-      <div class="ph-desc">Vollständige Patientenanamnese im Notfalleinsatz — besonders wichtig vor Medikamentengabe oder RSI-Narkose. Das zusätzliche <strong>+S</strong> steht für Soziale Faktoren.</div>
+      <div class="ph-desc">Vollständige Patientenanamnese im Notfalleinsatz — besonders wichtig vor Medikamentengabe oder RSI-Narkose.</div>
       <div class="ph-tags">
         <span class="tag" style="background:rgba(26,107,154,.12);color:#1A6B9A;border-color:rgba(26,107,154,.3);">ANAMNESE</span>
         <span class="tag" style="background:rgba(26,107,154,.08);color:#1A6B9A;border-color:rgba(26,107,154,.2);">VOR MEDIKAMENTENGABE</span>
@@ -414,19 +414,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g1)
       <div class="sr-detail">
         Kardiovaskulär: Rauchen · Übergewicht · Diabetes · Hypertonie · Hyperlipidämie · Familienanamnese<br>
         Weitere: Alkohol/Drogen · Immobilisation (TVT) · Beruf · Reisen · Schwangerschaft
-      </div>
-    </div>
-
-    <div class="sr" onclick="this.classList.toggle('open')">
-      <div class="sr-let">+S</div>
-      <div class="sr-main">
-        <div class="sr-kw">Soziale Faktoren<span>Soziales Umfeld</span></div>
-        <div class="sr-action">Wohnsituation, familiäre Belastungen, Hilfsbedarf zuhause</div>
-      </div>
-      <div class="sr-arr">▶</div>
-      <div class="sr-detail">
-        Lebt allein oder mit Familie? · Soziale Isolation? · Pflegebedarf organisiert? · Häusliche Gewalt möglich? · Psychiatrische Vorgeschichte?<br>
-        <em>Relevanz für Nachsorge und Übergabe an Krankenhaus</em>
       </div>
     </div>
 
@@ -552,54 +539,100 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g1)
       </div>
     </div>
   </div>
-  <div class="bigcard-grid">
+  <div class="rows">
 
-    <div class="bigcard">
-      <div class="bc-let">B</div>
-      <div class="bc-word">Balance</div>
-      <div class="bc-kw">Gleichgewicht</div>
-      <div class="bc-desc">Liegt eine Gleichgewichtsstörung vor? Links-/Rechtsneigung beim Gehen oder Stehen?</div>
-      <div class="bc-q">„Können Sie gerade stehen? Haben Sie das Gefühl umzufallen?"</div>
+    <div class="sr" onclick="this.classList.toggle('open')">
+      <div class="sr-let">B</div>
+      <div class="sr-main">
+        <div class="sr-kw">Balance<span>Gleichgewicht</span></div>
+        <div class="sr-action">Liegt eine Gleichgewichtsstörung vor? Links-/Rechtsneigung beim Gehen oder Stehen?</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Prüfen:</strong> Kann der Patient aufrecht stehen? Schwankt er? Neigt er zur Seite?<br>
+        <strong>Test:</strong> Patient bitten, aufzustehen und ein paar Schritte zu gehen — Koordination und Balance beobachten.<br>
+        <em>„Können Sie gerade stehen? Haben Sie das Gefühl umzufallen?"</em>
+        <div class="chips"><span class="chip">Ataxie?</span><span class="chip">Schwindel?</span><span class="chip">Sturzneigung?</span></div>
+      </div>
     </div>
 
-    <div class="bigcard">
-      <div class="bc-let">E</div>
-      <div class="bc-word">Eyes</div>
-      <div class="bc-kw">Sehstörung</div>
-      <div class="bc-desc">Liegt eine Sehstörung oder ein Sehverlust vor? Doppelbilder? Halbseitige Blindheit?</div>
-      <div class="bc-q">„Sehen Sie verschwommen, doppelt oder gar nicht auf einer Seite?"</div>
+    <div class="sr" onclick="this.classList.toggle('open')">
+      <div class="sr-let">E</div>
+      <div class="sr-main">
+        <div class="sr-kw">Eyes<span>Sehstörung</span></div>
+        <div class="sr-action">Liegt eine Sehstörung oder ein Sehverlust vor? Doppelbilder? Halbseitige Blindheit?</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Prüfen:</strong> Doppelbilder · einseitiger Sehverlust · Gesichtsfeldausfall · Verschwommensehen<br>
+        <strong>Test:</strong> „Decken Sie ein Auge ab — sehen Sie auf der Seite alles?" · Finger-Folge-Test<br>
+        <em>„Sehen Sie verschwommen, doppelt oder gar nicht auf einer Seite?"</em>
+        <div class="chips"><span class="chip">Doppelbilder?</span><span class="chip">Gesichtsfeldausfall?</span><span class="chip">Amaurosis fugax?</span></div>
+      </div>
     </div>
 
-    <div class="bigcard">
-      <div class="bc-let">F</div>
-      <div class="bc-word">Face</div>
-      <div class="bc-kw">Gesicht</div>
-      <div class="bc-desc">Kann der Patient lächeln? Hängt ein Mundwinkel herunter? Zunge gerade rausstrecken? Stirn runzeln?</div>
-      <div class="bc-q">„Zeigen Sie mir Ihre Zähne — können Sie lächeln?"</div>
+    <div class="sr" onclick="this.classList.toggle('open')">
+      <div class="sr-let">F</div>
+      <div class="sr-main">
+        <div class="sr-kw">Face<span>Gesicht</span></div>
+        <div class="sr-action">Hängt ein Mundwinkel? Kann der Patient lächeln, Zähne zeigen, Stirn runzeln?</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Test:</strong> Patient bitten zu lächeln — ist das Lächeln symmetrisch?<br>
+        Zunge gerade herausstrecken · Stirn runzeln · Backen aufblasen<br>
+        <strong>Positiv wenn:</strong> Mundwinkel hängt · Zunge weicht ab · einseitige Schwäche<br>
+        <em>„Zeigen Sie mir Ihre Zähne — können Sie lächeln?"</em>
+        <div class="chips"><span class="chip">Fazialisparese?</span><span class="chip">Mund-Asymmetrie?</span></div>
+      </div>
     </div>
 
-    <div class="bigcard">
-      <div class="bc-let">A</div>
-      <div class="bc-word">Arms</div>
-      <div class="bc-kw">Arme / Beine</div>
-      <div class="bc-desc">Kann der Patient beide Arme auf gleiche Höhe heben und 10 Sekunden halten? Sinkt ein Arm ab? Gleiches für Beine im Liegen.</div>
-      <div class="bc-q">„Heben Sie beide Arme hoch und halten Sie sie — 10 Sekunden."</div>
+    <div class="sr" onclick="this.classList.toggle('open')">
+      <div class="sr-let">A</div>
+      <div class="sr-main">
+        <div class="sr-kw">Arms<span>Arme / Beine</span></div>
+        <div class="sr-action">Kann der Patient beide Arme heben und 10 Sek. halten? Sinkt ein Arm ab?</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Armtest:</strong> Beide Arme auf Schulterhöhe heben, Augen schließen, 10 Sekunden halten — sinkt ein Arm ab?<br>
+        <strong>Beintest:</strong> Im Liegen beide Beine auf 30° anheben — sinkt ein Bein früher ab?<br>
+        <strong>Positiv wenn:</strong> einseitiges Absinken, Kraftunterschied, Pronationsbewegung<br>
+        <em>„Heben Sie beide Arme hoch und halten Sie sie — 10 Sekunden."</em>
+        <div class="chips"><span class="chip">Hemiparese?</span><span class="chip">Armabsinktest</span><span class="chip">Pronation?</span></div>
+      </div>
     </div>
 
-    <div class="bigcard">
-      <div class="bc-let">S</div>
-      <div class="bc-word">Speech</div>
-      <div class="bc-kw">Sprache</div>
-      <div class="bc-desc">Kann der Patient einen einfachen Satz nachsprechen? Ist die Sprache verwaschen, langsam oder unverständlich?</div>
-      <div class="bc-q">„Bitte sagen Sie nach: Der Himmel ist blau und das Gras ist grün."</div>
+    <div class="sr" onclick="this.classList.toggle('open')">
+      <div class="sr-let">S</div>
+      <div class="sr-main">
+        <div class="sr-kw">Speech<span>Sprache</span></div>
+        <div class="sr-action">Ist die Sprache verständlich? Kann der Patient einen Satz nachsprechen?</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Test:</strong> Einfachen Satz nachsprechen lassen: <em>„Der Himmel ist blau und das Gras ist grün."</em><br>
+        <strong>Positiv wenn:</strong> Sprache verwaschen (Dysarthrie) · Wortfindungsstörungen (Aphasie) · unverständlich · kein Sprechen möglich<br>
+        <strong>Auch prüfen:</strong> Versteht der Patient einfache Aufforderungen?
+        <div class="chips"><span class="chip">Dysarthrie?</span><span class="chip">Aphasie?</span><span class="chip">Sprachverständnis?</span></div>
+      </div>
     </div>
 
-    <div class="bigcard" style="border-left-color:#C0392B;--ac:#C0392B">
-      <div class="bc-let" style="color:#C0392B">T</div>
-      <div class="bc-word">Time</div>
-      <div class="bc-kw">Zeit — sofort handeln!</div>
-      <div class="bc-desc">Seit wann bestehen die Symptome? Symptombeginn dokumentieren. Bei positivem BEFAST-Befund: <strong>sofort in geeignete Stroke-Unit!</strong> Thrombolyse nur bis 4,5h möglich.</div>
-      <div class="bc-q" style="border-left-color:#C0392B;background:rgba(192,57,43,.07)">„Wann genau haben Sie / hat jemand die ersten Symptome bemerkt?" — Uhrzeit notieren!</div>
+    <div class="sr" style="--ac:#C0392B;border-left-color:#C0392B" onclick="this.classList.toggle('open')">
+      <div class="sr-let" style="color:#C0392B;background:rgba(192,57,43,.1)">T</div>
+      <div class="sr-main">
+        <div class="sr-kw" style="color:#C0392B">Time<span style="color:var(--g1)">Zeit — sofort handeln!</span></div>
+        <div class="sr-action">Symptombeginn dokumentieren — Thrombolyse nur bis 4,5 h möglich!</div>
+      </div>
+      <div class="sr-arr">▶</div>
+      <div class="sr-detail">
+        <strong>Sofortmaßnahme:</strong> Uhrzeit des Symptombeginns notieren — auch wenn unklar, letzten bekannten Zeitpunkt ohne Symptome festhalten.<br>
+        Bei positivem (BE)FAST-Befund: <strong>sofort in geeignete Stroke-Unit transportieren!</strong><br>
+        <strong>Zeitfenster:</strong> Thrombolyse bis 4,5 h · Thrombektomie bis 24 h (selektiv)<br>
+        <em>„Wann genau haben Sie / hat jemand die ersten Symptome bemerkt?" — Uhrzeit notieren!</em>
+        <div class="chips" style="--ac:#C0392B"><span class="chip">Uhrzeit notieren!</span><span class="chip">Stroke Unit</span><span class="chip">Prä-Notif. Krankenhaus</span><span class="chip">Lyse bis 4,5h</span></div>
+        <div class="note" style="border-left-color:rgba(192,57,43,.5)">🚨 Time is Brain — jede Minute zählt. Kein Zeitverlust durch unnötige Diagnostik vor Ort!</div>
+      </div>
     </div>
 
   </div>
