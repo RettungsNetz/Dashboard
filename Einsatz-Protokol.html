@@ -1223,6 +1223,58 @@ window.addEventListener('message', function(e) {
   if (!d || d.target !== 'protokol') return;
   if (d.fn === 'toggleTheme') toggleTheme();
   if (d.fn === 'doPrint')     doPrint();
+  if (d.fn === 'getData') {
+    // Alle relevanten Felder sammeln und zurücksenden
+    function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+    function selVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function chkLabel(label) {
+      var boxes = document.querySelectorAll('.ci-lg input[type="checkbox"]');
+      for (var i = 0; i < boxes.length; i++) {
+        var b = boxes[i];
+        if (b.parentElement && b.parentElement.textContent.trim().indexOf(label) !== -1 && b.checked) return true;
+      }
+      return false;
+    }
+    // Geburtsdatum: erstes date-input in erster .section
+    var gebDatum = '';
+    var patSection = document.querySelector('.section');
+    if (patSection) {
+      var dateInputs = patSection.querySelectorAll('input[type="date"]');
+      if (dateInputs.length > 0) gebDatum = dateInputs[0].value;
+    }
+    // Geschlecht: erstes select in erster section
+    var geschlecht = '';
+    var secs = document.querySelectorAll('.section select');
+    if (secs.length > 0) geschlecht = secs[0].value;
+    // Notarzt Name
+    var notarztName = '';
+    var sigIns = document.querySelectorAll('input[placeholder*="Dr."]');
+    if (sigIns.length > 0) notarztName = sigIns[0].value.trim();
+    // Übergabebericht
+    var uebergabe = '';
+    var tareas = document.querySelectorAll('textarea[placeholder*="Situation"]');
+    if (tareas.length > 0) uebergabe = tareas[0].value.trim();
+
+    var data = {
+      pat_nachname:           val('pat_nachname'),
+      pat_vorname:            val('pat_vorname'),
+      pat_geburtsdatum:       gebDatum,
+      pat_geschlecht:         geschlecht,
+      enr:                    val('enr'),
+      einsatzort:             val('einsatzort'),
+      einsatz_datum:          val('einsatz_datum'),
+      fz_kennung:             val('fz_kennung'),
+      ausrueck_time:          val('ausrueck_time'),
+      ankunft_time:           val('ankunft_time'),
+      toteszeitpunkt:         val('toteszeitpunkt_time'),
+      notarzt_name:           notarztName,
+      massnahmen_reanimation: chkLabel('Reanimation'),
+      uebergabe_bericht:      uebergabe,
+      sig_protkf_name:        val('sig_protkf_name'),
+      sig_protkf_sig:         val('sig_protkf_sig')
+    };
+    e.source.postMessage({ type: 'protokol-data', data: data }, '*');
+  }
 });
 </script>
 </body>

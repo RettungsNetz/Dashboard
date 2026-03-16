@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vorläufige Todesbescheinigung</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<style>
+[data-theme="light"] {
+  --bg: #E8E3DC; --card: #FFFFFF; --g1: #1A1A1A; --g2: #2D2D2D;
+  --g4: #888888; --g5: #B8B8B8; --g6: #E0E0E0; --g7: #F4F3F1;
+  --bd: 1px solid #D4CEC8; --inp-bg: #F4F3F1; --inp-foc: #FFFFFF;
+  --strip-bg: #1A1A1A; --strip-c: #888; --strip-v: #FFFFFF; --head-bg: #F4F3F1;
+}
+[data-theme="dark"] {
+  --bg: #141414; --card: #1E1E1E; --g1: #E8E8E8; --g2: #CCCCCC;
+  --g4: #777777; --g5: #555555; --g6: #333333; --g7: #282828;
+  --bd: 1px solid #383838; --inp-bg: #282828; --inp-foc: #2E2E2E;
+  --strip-bg: #0A0A0A; --strip-c: #666; --strip-v: #E0E0E0; --head-bg: #252525;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --rot: #C0392B; --rot-d: #922B21;
+  --lila: #7B3FA0; --lila-d: #5e2f7a;
+  --gap: 2px;
+}
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg); color: var(--g1);
+  font-size: 12px; min-height: 100vh;
+  transition: background .25s, color .25s;
+}
+
+/* ══ MAIN ══ */
+.main { width: 100%; padding: 8px 8px 0; display: flex; flex-direction: column; gap: var(--gap); }
+
+/* OFFICIAL HEADER BAND */
+.official-band {
+  background: var(--lila); color: #fff;
+  padding: 10px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ob-title { font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.ob-sub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; opacity: .8; margin-top: 2px; }
+.ob-warn { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; background: rgba(255,255,255,.15); padding: 5px 12px; border: 1px solid rgba(255,255,255,.3); }
+
+/* ID STRIP */
+.id-strip {
+  background: var(--strip-bg);
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 6px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+}
+.id-field { display: flex; align-items: center; gap: 6px; }
+.id-field span { color: var(--strip-c); white-space: nowrap; font-size: 10px; }
+.id-field input { background: transparent; border: none; border-bottom: 1px solid #444; color: var(--strip-v); font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 1px 4px; outline: none; }
+.id-field input:focus { border-bottom-color: var(--lila); }
+.id-field input.wide { width: 200px; }
+.id-field input.med  { width: 120px; }
+.id-field input.sm   { width: 80px; }
+
+/* ROW / SECTION */
+.row { display: flex; gap: var(--gap); align-items: stretch; width: 100%; }
+.section { background: var(--card); border-left: 4px solid transparent; display: flex; flex-direction: column; flex: 1; min-width: 0; transition: background .25s; }
+.s-head { background: var(--head-bg); padding: 5px 11px; display: flex; align-items: center; gap: 7px; border-bottom: var(--bd); flex-shrink: 0; }
+.s-num { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; min-width: 18px; }
+.s-title { font-size: 9px; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; color: var(--g2); }
+.s-badge { font-family: 'IBM Plex Mono', monospace; font-size: 8px; padding: 1px 6px; border-radius: 2px; margin-left: auto; }
+.s-body { padding: 9px 11px; flex: 1; display: flex; flex-direction: column; gap: 7px; }
+
+/* GRIDS */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 10px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px 10px; }
+.c2 { grid-column: span 2; }
+.c3 { grid-column: span 3; }
+.c4 { grid-column: span 4; }
+
+/* FIELD */
+.f { display: flex; flex-direction: column; gap: 2px; }
+.f > label { font-size: 8px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--g4); }
+.f input, .f select, .f textarea {
+  width: 100%; border: var(--bd); background: var(--inp-bg);
+  padding: 5px 7px; font-family: 'IBM Plex Sans', sans-serif; font-size: 11px;
+  color: var(--g1); outline: none; transition: border-color .15s, background .25s;
+  border-radius: 0; appearance: none; -webkit-appearance: none;
+}
+.f input:focus, .f select:focus, .f textarea:focus { border-color: var(--lila); background: var(--inp-foc); }
+.f textarea { resize: vertical; min-height: 62px; line-height: 1.45; }
+.f select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5 4.5-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center; padding-right: 22px;
+}
+.f input.imported { border-color: rgba(139,92,246,.5); background: rgba(139,92,246,.05); }
+
+/* RADIOS / CHECKS */
+.rg { display: flex; gap: 4px 16px; flex-wrap: wrap; }
+.ri { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; font-weight: 500; color: var(--g1); user-select: none; }
+.ri input[type="radio"] { width: 13px; height: 13px; accent-color: var(--lila); cursor: pointer; margin: 0; flex-shrink: 0; }
+.cg { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.ci { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; font-weight: 500; color: var(--g1); user-select: none; }
+.ci input[type="checkbox"] { width: 13px; height: 13px; accent-color: var(--lila); cursor: pointer; margin: 0; }
+
+/* TIME CELL */
+.vt-time-cell { display: flex; align-items: center; gap: 2px; }
+.vt-time-cell input { flex: 1; }
+.btn-now { background: var(--lila); color: #fff; border: none; cursor: pointer; font-size: 8px; font-weight: 700; padding: 2px 5px; white-space: nowrap; font-family: 'IBM Plex Sans', sans-serif; flex-shrink: 0; transition: background .15s; line-height: 1.2; }
+.btn-now:hover { background: var(--lila-d); }
+
+.divider { height: 1px; background: var(--g6); flex-shrink: 0; }
+.sub-lbl { font-size: 8px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--g4); }
+
+/* SIGNATURES */
+.sig-box { display: flex; flex-direction: column; gap: 5px; }
+.sig-author-wrap { border: var(--bd); background: var(--inp-bg); display: flex; align-items: center; justify-content: center; min-height: 80px; padding: 6px 10px; transition: background .25s; }
+.sig-author-input { width: 100%; border: none; background: transparent; outline: none; resize: none; font-family: 'Dancing Script', cursive; font-size: 28px; color: var(--g1); line-height: 1.2; text-align: center; }
+.sig-author-input::placeholder { color: var(--g5); font-size: 20px; }
+.sig-lbl { font-size: 8px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--g4); }
+.sig-line { border: none; border-bottom: 1px solid var(--g5); background: transparent; width: 100%; height: 40px; display: block; }
+
+/* IMPORTED BADGE */
+.import-note { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: #8b5cf6; letter-spacing: 1px; display: flex; align-items: center; gap: 4px; }
+.import-dot { width: 5px; height: 5px; border-radius: 50%; background: #8b5cf6; }
+
+/* TODESART BOX */
+.todesart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.todesart-card { border: var(--bd); padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; transition: border-color .15s; }
+.todesart-card:has(input:checked) { border-color: var(--lila); background: rgba(139,92,246,.05); }
+.todesart-card label.ci { font-size: 12px; font-weight: 600; }
+.todesart-card .sub-lbl { margin-top: 2px; }
+
+/* WARN OVERLAY */
+.warn-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; animation: warnFadeIn .18s ease; }
+@keyframes warnFadeIn { from { opacity:0; } to { opacity:1; } }
+.warn-box { background: #1a1a1a; border: 2px solid #7B3FA0; border-radius: 4px; padding: 28px 32px 22px; max-width: 440px; width: 90%; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 0 40px rgba(123,63,160,.4), 0 8px 32px rgba(0,0,0,.6); animation: warnPop .22s cubic-bezier(.34,1.56,.64,1); }
+@keyframes warnPop { from { transform: scale(.88); opacity:0; } to { transform: scale(1); opacity:1; } }
+.warn-icon svg { width: 44px; height: 44px; }
+.warn-title { font-size: 16px; font-weight: 700; color: #f0f4fa; letter-spacing: 1px; text-align: center; }
+.warn-msg { font-size: 12px; color: #8a9ab5; text-align: center; line-height: 1.5; }
+.warn-missing { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.warn-badge { background: rgba(123,63,160,.2); border: 1px solid #7B3FA0; color: #c4a0e0; font-size: 10px; padding: 3px 8px; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; }
+.warn-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.warn-btn { background: #222; border: 1px solid #444; color: #cdd6e8; padding: 8px 18px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border-radius: 2px; transition: all .15s; }
+.warn-btn:hover { border-color: #666; }
+.warn-btn-skip { background: rgba(123,63,160,.2); border: 1px solid #7B3FA0; color: #c4a0e0; padding: 8px 18px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border-radius: 2px; transition: all .15s; }
+.warn-btn-skip:hover { background: rgba(123,63,160,.35); }
+
+/* PRINT */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .main { padding: 0 !important; }
+  .section, .card { background: #fff !important; border-color: #ccc !important; }
+  .official-band { background: #5a2a80 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .id-strip { background: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .s-head { background: #f4f4f4 !important; }
+  .f input, .f select, .f textarea { background: #fff !important; color: #000 !important; border-color: #ccc !important; }
+  .f > label { color: #555 !important; }
+  .todesart-card:has(input:checked) { background: #f0eaf8 !important; border-color: #7B3FA0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sig-author-input { color: #000 !important; }
+  .import-note { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+
+  <!-- OFFICIAL HEADER -->
+  <div class="official-band">
+    <div>
+      <div class="ob-title">☩ Vorläufige Todesbescheinigung</div>
+      <div class="ob-sub">Ausgestellt durch Notarzt · Fiktives Dokument für Roleplay-Zwecke</div>
+    </div>
+    <div class="ob-warn">⚠ VERTRAULICH — NUR FÜR AUTORISIERTES PERSONAL</div>
+  </div>
+
+  <!-- ID STRIP -->
+  <div class="id-strip">
+    <div class="id-field"><span>Einsatz-Nr.</span><input class="med" type="text" id="tb_enr" placeholder="Referenz-Nr."></div>
+    <div class="id-field"><span>Datum</span><input class="med" type="date" id="tb_datum"></div>
+    <div class="id-field"><span>Uhrzeit Feststellung</span><input class="sm" type="text" id="tb_uhrzeit" placeholder="HH:MM"></div>
+    <div class="id-field"><span>Einsatzort</span><input class="wide" type="text" id="tb_ort" placeholder="Einsatzort / Fundort"></div>
+  </div>
+
+  <!-- ROW 1: Verstorbene Person + Todesfeststellung -->
+  <div class="row">
+    <div class="section" style="border-left-color:#7B3FA0; flex:0.9;">
+      <div class="s-head">
+        <span class="s-num" style="color:#7B3FA0;">01</span>
+        <span class="s-title">Verstorbene Person</span>
+      </div>
+      <div class="s-body">
+        <div class="g2">
+          <div class="f"><label>Nachname</label><input type="text" id="td_nachname" placeholder="Mustermann" autocomplete="off"></div>
+          <div class="f"><label>Vorname</label><input type="text" id="td_vorname" placeholder="Max" autocomplete="off"></div>
+          <div class="f"><label>Geburtsdatum</label><input type="date" id="td_geburtsdatum"></div>
+          <div class="f"><label>Geschlecht</label>
+            <select id="td_geschlecht"><option value="">—</option><option>Männlich</option><option>Weiblich</option><option>Divers</option><option>Unbekannt</option></select>
+          </div>
+          <div class="f"><label>Alter (geschätzt)</label><input type="text" id="td_alter" placeholder="ca. 45 Jahre"></div>
+          <div class="f"><label>Arbeitgeber / Beruf</label><input type="text" id="td_beruf" placeholder="z.B. Polizei …"></div>
+          <div class="f c2"><label>Identität</label>
+            <select id="td_identitaet"><option value="">—</option><option>Eindeutig identifiziert</option><option>Vorläufig identifiziert</option><option>Unbekannt</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="border-left-color:#C0392B; flex:1.6;">
+      <div class="s-head">
+        <span class="s-num" style="color:#C0392B;">02</span>
+        <span class="s-title">Todesfeststellung</span>
+      </div>
+      <div class="s-body">
+        <div class="g2">
+          <div class="f"><label>Todeszeitpunkt (Uhrzeit)</label>
+            <div class="vt-time-cell"><input type="text" id="td_todeszeit" placeholder="HH:MM"><button class="btn-now" onclick="setNow('td_todeszeit')">⏱ Zeit</button></div>
+          </div>
+          <div class="f"><label>Todesdatum</label><input type="date" id="td_todesdatum"></div>
+        </div>
+        <div class="divider"></div>
+        <!-- Sichere & Unsichere Todeszeichen nebeneinander -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 18px;">
+          <div>
+            <div class="sub-lbl" style="margin-bottom:5px;">Sichere Todeszeichen</div>
+            <div class="cg" style="flex-direction:column; gap:5px;">
+              <label class="ci"><input type="checkbox" id="tz_livores"> Livores (Totenflecken)</label>
+              <label class="ci"><input type="checkbox" id="tz_rigor"> Rigor mortis (Totenstarre)</label>
+              <label class="ci"><input type="checkbox" id="tz_faeulung"> Fäulniszeichen sichtbar</label>
+              <label class="ci"><input type="checkbox" id="tz_verletzung"> Leben unvereinb. Verletzung</label>
+              <label class="ci"><input type="checkbox" id="tz_hirntod"> Hirntodfeststellung</label>
+            </div>
+          </div>
+          <div>
+            <div class="sub-lbl" style="margin-bottom:5px;">Unsichere Todeszeichen</div>
+            <div class="cg" style="flex-direction:column; gap:5px;">
+              <label class="ci"><input type="checkbox"> Keine Atmung</label>
+              <label class="ci"><input type="checkbox"> Kein Puls / Herzstillstand</label>
+              <label class="ci"><input type="checkbox"> Weite, reaktionslose Pupillen</label>
+              <label class="ci"><input type="checkbox"> Bewusstlosigkeit</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Todesart + Umstände -->
+  <div class="row">
+    <div class="section" style="border-left-color:#1A6B9A; flex:1;">
+      <div class="s-head">
+        <span class="s-num" style="color:#1A6B9A;">03</span>
+        <span class="s-title">Todesart</span>
+        <span class="s-badge" style="background:rgba(26,107,154,.15); color:#4895ef; border:1px solid rgba(26,107,154,.3);">Pflichtfeld</span>
+      </div>
+      <div class="s-body">
+        <div class="todesart-grid">
+          <div class="todesart-card">
+            <label class="ci"><input type="radio" name="todesart" id="ta_natuerlich" value="natuerlich"> Natürlicher Tod</label>
+            <div class="sub-lbl" style="padding-left:18px; color:#555;">Durch Krankheit / natürliche Ursache</div>
+          </div>
+          <div class="todesart-card">
+            <label class="ci"><input type="radio" name="todesart" id="ta_unnatuerlich" value="unnatuerlich"> Nicht-natürlicher Tod</label>
+            <div class="sub-lbl" style="padding-left:18px; color:#555;">Unfall, Suizid, Fremdeinwirkung, Vergiftung</div>
+          </div>
+          <div class="todesart-card">
+            <label class="ci"><input type="radio" name="todesart" id="ta_ungeklaert" value="ungeklaert"> Ungeklärter Tod</label>
+            <div class="sub-lbl" style="padding-left:18px; color:#555;">Todesart nicht feststellbar</div>
+          </div>
+          <div class="todesart-card">
+            <label class="ci"><input type="radio" name="todesart" id="ta_reanimation" value="reanimation"> Tod nach Reanimation</label>
+            <div class="sub-lbl" style="padding-left:18px; color:#555;">ROSC nicht erreicht / Abbruch der CPR</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="f">
+          <label>Wahrscheinliche Todesursache (vorläufig)</label>
+          <input type="text" id="td_todesursache" placeholder="z.B. Herz-Kreislauf-Versagen, Polytrauma nach Unfall …">
+        </div>
+        <div class="f">
+          <label>Grundleiden / Vorerkrankung (soweit bekannt)</label>
+          <input type="text" id="td_grundleiden" placeholder="z.B. bekannte KHK, Diabetes mellitus …">
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="border-left-color:#1A7A5E; flex:1.3;">
+      <div class="s-head">
+        <span class="s-num" style="color:#1A7A5E;">04</span>
+        <span class="s-title">Todesumstände &amp; Fundort</span>
+      </div>
+      <div class="s-body">
+        <div class="g3">
+          <div class="f"><label>Auffindesituation</label>
+            <select id="td_auffindesituation"><option value="">—</option><option>Durch Rettungsdienst</option><option>Durch Angehörige</option><option>Durch Polizei</option><option>Durch Ersthelfer</option><option>Durch Passanten</option><option>Sonstige</option></select>
+          </div>
+          <div class="f"><label>Auffindeort</label>
+            <select id="td_auffindeort"><option value="">—</option><option>Privatwohnung</option><option>Öffentlicher Raum</option><option>Straße / Fahrbahn</option><option>Arbeitsplatz</option><option>Krankenhaus</option><option>Pflegeeinrichtung</option><option>Freifläche / Natur</option><option>Sonstiges</option></select>
+          </div>
+          <div class="f"><label>Benachrichtigung</label>
+            <select><option value="">—</option><option>Polizei informiert</option><option>Polizei vor Ort</option><option>Ausstehend</option><option>Staatsanwaltschaft informiert</option></select>
+          </div>
+        </div>
+        <div class="f">
+          <label>Beschreibung der Todesumstände / Vorbefunde</label>
+          <textarea style="min-height:80px;" placeholder="Detaillierte Beschreibung: Lage des Verstorbenen, äußere Verletzungszeichen, bekannte Vorerkrankungen, Medikamente, Zeugenangaben …" id="td_umstaende"></textarea>
+        </div>
+        <div class="divider"></div>
+        <div class="sub-lbl" style="margin-bottom:5px;">Äußere Verletzungen sichtbar</div>
+        <div class="cg" style="flex-wrap:wrap; gap:5px 14px;">
+          <label class="ci"><input type="checkbox"> Keine äußeren Verletzungen</label>
+          <label class="ci"><input type="checkbox"> Stumpfes Trauma</label>
+          <label class="ci"><input type="checkbox"> Schnittverletzungen</label>
+          <label class="ci"><input type="checkbox"> Schusswunden</label>
+          <label class="ci"><input type="checkbox"> Verbrennungen</label>
+          <label class="ci"><input type="checkbox"> Ertrinken (Zeichen)</label>
+          <label class="ci"><input type="checkbox"> Strangulationsmarken</label>
+          <label class="ci"><input type="checkbox"> Amputation</label>
+          <label class="ci"><input type="checkbox"> Avulsion</label>
+          <label class="ci"><input type="checkbox"> Polytrauma</label>
+          <label class="ci"><input type="checkbox"> Sonstige</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Maßnahmen + Reanimation -->
+  <div class="row">
+    <div class="section" style="border-left-color:#C0392B; flex:1;">
+      <div class="s-head">
+        <span class="s-num" style="color:#C0392B;">05</span>
+        <span class="s-title">Reanimationsmaßnahmen</span>
+      </div>
+      <div class="s-body">
+        <div class="sub-lbl" style="margin-bottom:6px;">Reanimation durchgeführt?</div>
+        <div class="rg" style="flex-direction:column; gap:6px; margin-bottom:8px;">
+          <label class="ri"><input type="radio" name="reanimation" value="nein" checked> Keine Reanimation (Tod sofort festgestellt)</label>
+          <label class="ri"><input type="radio" name="reanimation" id="reani_ja" value="ja"> Reanimation durchgeführt &amp; abgebrochen</label>
+          <label class="ri"><input type="radio" name="reanimation" value="verzicht"> Verzicht auf Reanimation (DNR / Patientenverfügung)</label>
+        </div>
+        <div id="reani-details" style="display:none; flex-direction:column; gap:7px;">
+          <div class="divider"></div>
+          <div class="g2">
+            <div class="f"><label>Beginn CPR</label><div class="vt-time-cell"><input type="text" placeholder="HH:MM"><button class="btn-now" onclick="setNowBtn(this)">⏱</button></div></div>
+            <div class="f"><label>Ende CPR</label><div class="vt-time-cell"><input type="text" placeholder="HH:MM"><button class="btn-now" onclick="setNowBtn(this)">⏱</button></div></div>
+          </div>
+          <div class="cg" style="flex-direction:column; gap:5px;">
+            <label class="ci"><input type="checkbox"> Defibrillation durchgeführt</label>
+            <label class="ci"><input type="checkbox"> Medikamentengabe (Adrenalin etc.)</label>
+            <label class="ci"><input type="checkbox"> Herz/Lungen Wiederbelebung durchgeführt</label>
+          </div>
+          <div class="f"><label>CPR-Dauer / Bemerkungen</label><input type="text" placeholder="z.B. 25 min CPR, AED 3× Schocks …"></div>
+        </div>
+        <div class="f" style="margin-top:4px;">
+          <label>Abbruchgrund / Begründung Therapieverzicht</label>
+          <textarea style="min-height:50px;" placeholder="z.B. Todeszeichen bei Eintreffen vorhanden, Patientenverfügung liegt vor …"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="border-left-color:#9A6B1A; flex:1;">
+      <div class="s-head">
+        <span class="s-num" style="color:#9A6B1A;">06</span>
+        <span class="s-title">Einsatzfahrzeug &amp; Team</span>
+      </div>
+      <div class="s-body">
+        <div class="g2">
+          <div class="f"><label>Fahrzeugkennung</label><input type="text" id="td_fz_kennung" placeholder="NEF Florian 2-10-1"></div>
+          <div class="f"><label>Ausrückezeit</label><input type="text" id="td_ausrueck" placeholder="HH:MM"></div>
+          <div class="f"><label>Ankunftszeit am Einsatzort</label><input type="text" id="td_ankunft" placeholder="HH:MM"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="f"><label>Notarzt — Name &amp; Fachrichtung (Pflichtfeld)</label><input type="text" id="td_notarzt_name" placeholder="Dr. Vor- und Nachname, Facharzt für …"></div>
+        <div class="f"><label>Weitere anwesende Einsatzkräfte</label><input type="text" id="td_weitere_kräfte" placeholder="Rettungssanitäter, Polizei vor Ort …"></div>
+        <div class="f"><label>Sonstige beteiligte Stellen</label><input type="text" placeholder="z.B. Staatsanwaltschaft, KDD, Bestatter …"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Straftatverdacht + Sektion -->
+  <div class="row">
+    <div class="section" style="border-left-color:#C0392B;">
+      <div class="s-head">
+        <span class="s-num" style="color:#C0392B;">07</span>
+        <span class="s-title">Rechtliche Hinweise &amp; Sektionsempfehlung</span>
+      </div>
+      <div class="s-body">
+        <div class="g3">
+          <div class="f">
+            <label>Verdacht auf nicht-natürlichen Tod / Straftat</label>
+            <select id="td_straftat">
+              <option value="">—</option>
+              <option>Nein — kein Verdacht</option>
+              <option>Ja — Polizei unterrichtet</option>
+              <option>Ja — Staatsanwaltschaft informiert</option>
+              <option>Unklar — weitere Untersuchung erforderlich</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Obduktion empfohlen?</label>
+            <select>
+              <option value="">—</option>
+              <option>Nein</option>
+              <option>Ja — klinische Sektion</option>
+              <option>Ja — gerichtliche Sektion angeordnet</option>
+              <option>Bereits angeordnet</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Leiche freigegeben für</label>
+            <select>
+              <option value="">—</option>
+              <option>Bestatter (Freigabe erteilt)</option>
+              <option>Gerichtsmedizin (gesperrt)</option>
+              <option>Polizei (gesperrt)</option>
+              <option>Noch nicht entschieden</option>
+            </select>
+          </div>
+        </div>
+        <div class="f">
+          <label>Ergänzende Angaben / Notizen</label>
+          <textarea style="min-height:55px;" placeholder="Besonderheiten der Situation, Angaben von Zeugen oder Angehörigen, rechtliche Hinweise …"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 5: Unterschriften -->
+  <div class="row">
+    <div class="section" style="border-left-color:#2D2D2D;">
+      <div class="s-head">
+        <span class="s-num" style="color:#888;">08</span>
+        <span class="s-title">Unterschrift Notarzt &amp; Abschluss</span>
+      </div>
+      <div class="s-body">
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:14px;">
+
+          <div class="sig-box">
+            <div class="f" style="margin-bottom:4px;">
+              <label>Notarzt — Name, Titel &amp; Fachrichtung</label>
+              <input type="text" id="sig_notarzt_name" placeholder="Dr. Vor- und Nachname, Fachrichtung …" autocomplete="off">
+            </div>
+            <div class="sig-lbl" style="margin-bottom:3px;">Unterschrift Notarzt (Pflichtfeld)</div>
+            <div class="sig-author-wrap">
+              <textarea id="sig_notarzt_sig" class="sig-author-input" rows="2" placeholder="Hier unterschreiben …" spellcheck="false"></textarea>
+            </div>
+          </div>
+
+          <div class="sig-box">
+            <div class="f"><label>Datum &amp; Uhrzeit Ausstellung</label>
+              <div style="display:flex; gap:5px;">
+                <input type="date" id="sig_datum" style="flex:1;">
+                <div class="vt-time-cell" style="flex:1;"><input type="text" id="sig_uhrzeit" placeholder="HH:MM"><button class="btn-now" onclick="setNow('sig_uhrzeit')">⏱</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px; padding:8px 12px; border: 1px solid rgba(139,92,246,.25); background:rgba(139,92,246,.05); font-size:9px; color:var(--g4); font-family:'IBM Plex Mono',monospace; line-height:1.7; letter-spacing:.5px;">
+          ⚠ RECHTLICHER HINWEIS (FIKTIV): Diese Todesbescheinigung ist ein Dokument für fiktive Roleplay-Zwecke. Sie besitzt keine rechtliche Gültigkeit. Im echten Einsatz sind die landesspezifischen Formulare zu verwenden und die Meldepflichten nach § 87 StPO sowie die jeweiligen Bestattungsgesetze der Bundesländer zu beachten.
+        </div>
+        <!-- BOTTOM ACTION BAR -->
+        <div class="no-print" style="display:flex; align-items:center; gap:8px; margin-top:12px; padding:10px 0 4px; border-top:1px solid var(--g6);">
+          <button onclick="toggleTheme()" style="border:1px solid var(--g6); height:30px; padding:0 13px; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; background:var(--inp-bg); display:flex; align-items:center; gap:6px; color:var(--g4); border-radius:2px; transition:all .15s;">
+            <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <span id="theme-label">Hell</span>
+          </button>
+          <button onclick="doPrint()" style="background:var(--lila); border:1px solid var(--lila); color:#fff; height:30px; padding:0 18px; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; display:flex; align-items:center; gap:6px; border-radius:2px; transition:all .15s;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Als PDF drucken
+          </button>
+          <div id="import-indicator" style="display:none; margin-left:8px;">
+            <span class="import-note"><span class="import-dot"></span> Daten aus Einsatz-Protokoll importiert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── Init ──
+(function() {
+  var now = new Date();
+  document.getElementById('tb_datum').value = now.toISOString().split('T')[0];
+  document.getElementById('td_todesdatum').value = now.toISOString().split('T')[0];
+  document.getElementById('sig_datum').value = now.toISOString().split('T')[0];
+  var h = String(now.getHours()).padStart(2,'0');
+  var m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('tb_uhrzeit').value = h + ':' + m;
+  document.getElementById('td_todeszeit').value = h + ':' + m;
+  document.getElementById('sig_uhrzeit').value = h + ':' + m;
+})();
+
+// ── Zeit-Buttons ──
+function setNow(id) {
+  var el = document.getElementById(id); if (!el) return;
+  var now = new Date();
+  el.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+function setNowBtn(btn) {
+  var inp = btn.previousElementSibling; if (!inp) return;
+  var now = new Date();
+  inp.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+// ── Reanimation toggle ──
+document.querySelectorAll('input[name="reanimation"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    var d = document.getElementById('reani-details');
+    d.style.display = (this.value === 'ja') ? 'flex' : 'none';
+  });
+});
+
+// ── Theme ──
+var dark = true;
+function toggleTheme() {
+  dark = !dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  var lbl = document.getElementById('theme-label');
+  if (lbl) lbl.textContent = dark ? 'Hell' : 'Dunkel';
+  var icon = document.getElementById('theme-icon');
+  if (icon) icon.innerHTML = dark
+    ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+    : '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+}
+
+// ── Pflichtfeld-Check ──
+var PFLICHT_TB = [
+  { id: 'td_nachname',     label: 'Verstorbene Person · Nachname' },
+  { id: 'td_vorname',      label: 'Verstorbene Person · Vorname' },
+  { id: 'td_notarzt_name', label: 'Notarzt · Name & Fachrichtung' },
+  { id: 'td_fz_kennung',   label: 'Fahrzeugkennung' },
+  { id: 'sig_notarzt_name',label: 'Notarzt — Name, Titel & Fachrichtung' },
+  { id: 'sig_notarzt_sig', label: 'Unterschrift Notarzt' }
+];
+var PFLICHT_RADIO = [
+  { name: 'todesart', label: 'Todesart' }
+];
+
+function checkPflicht() {
+  var missing = [];
+  PFLICHT_TB.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    if (!el || !el.value.trim()) missing.push(f);
+  });
+  PFLICHT_RADIO.forEach(function(f) {
+    var checked = document.querySelector('input[name="' + f.name + '"]:checked');
+    if (!checked) missing.push(f);
+  });
+  return missing;
+}
+
+function highlightMissing(list, on) {
+  PFLICHT_TB.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    if (el) { el.style.borderColor = ''; el.style.boxShadow = ''; }
+  });
+  if (!on) return;
+  list.forEach(function(f) {
+    if (f.id) {
+      var el = document.getElementById(f.id);
+      if (el) { el.style.borderColor = '#7B3FA0'; el.style.boxShadow = '0 0 0 2px rgba(123,63,160,.3)'; }
+    }
+  });
+  if (list.length > 0) {
+    var firstId = list[0].id;
+    if (firstId) {
+      var el = document.getElementById(firstId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
+function playWarnSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(freq, start, dur, vol) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + start);
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + dur + 0.05);
+    }
+    beep(520, 0,    0.16, 0.4);
+    beep(360, 0.20, 0.16, 0.4);
+    beep(520, 0.40, 0.20, 0.5);
+  } catch(e) {}
+}
+
+function showWarnPopup(missingList, onConfirm) {
+  playWarnSound();
+  highlightMissing(missingList, true);
+  var overlay = document.createElement('div');
+  overlay.className = 'warn-overlay';
+  var badges = missingList.map(function(f) { return '<span class="warn-badge">' + f.label + '</span>'; }).join('');
+  overlay.innerHTML =
+    '<div class="warn-box">' +
+      '<div class="warn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#7B3FA0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>' +
+      '<div class="warn-title">Pflichtfelder unvollständig</div>' +
+      '<div class="warn-msg">Folgende Angaben fehlen für die Todesbescheinigung:</div>' +
+      '<div class="warn-missing">' + badges + '</div>' +
+      '<div class="warn-msg" style="font-size:11px;color:#888;">Felder ergänzen oder Druck trotzdem fortfahren.</div>' +
+      '<div class="warn-buttons">' +
+        '<button class="warn-btn" id="tbWarnClose">Zurück & Ergänzen</button>' +
+        '<button class="warn-btn-skip" id="tbWarnSkip">Trotzdem drucken</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  function close() {
+    overlay.style.opacity = '0'; overlay.style.transition = 'opacity .15s';
+    setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 160);
+    highlightMissing([], false);
+  }
+  document.getElementById('tbWarnClose').addEventListener('click', close);
+  document.getElementById('tbWarnSkip').addEventListener('click', function() { close(); setTimeout(onConfirm, 180); });
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+}
+
+// ── Print ──
+function doPrint() {
+  var missing = checkPflicht();
+  if (missing.length > 0) { showWarnPopup(missing, function() { doPrintExec(); }); return; }
+  doPrintExec();
+}
+function doPrintExec() {
+  var all = document.querySelectorAll('.main input[type="text"], .main input[type="date"], .main textarea');
+  var changed = [];
+  all.forEach(function(el) {
+    if (el.value.trim() === '') { el.value = '--'; changed.push({ el: el, orig: '' }); }
+  });
+  // Dateiname: "Todesbescheinigung [Einsatz-Nr.] [Notarzt Name]"
+  var enr       = document.getElementById('tb_enr').value.trim();
+  var notarzt   = document.getElementById('sig_notarzt_name').value.trim();
+  var fileName  = 'Todesbescheinigung';
+  if (enr && enr !== '--')     fileName += ' ' + enr;
+  if (notarzt && notarzt !== '--') fileName += ' ' + notarzt;
+  document.title = fileName;
+  try { window.parent.postMessage({ type: 'proto-filename', fileName: fileName }, '*'); } catch(e) {}
+  window.print();
+  window.addEventListener('afterprint', function handler() {
+    window.removeEventListener('afterprint', handler);
+    changed.forEach(function(item) { item.el.value = item.orig; });
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// ── IMPORT-BRIDGE: Empfängt Daten vom Einsatz-Protokoll ──
+// ══════════════════════════════════════════════════════════
+window.addEventListener('message', function(e) {
+  var d = e.data;
+  if (!d) return;
+
+  // Toggle Theme von Parent
+  if (d.target === 'todesbescheinigung' && d.fn === 'toggleTheme') { toggleTheme(); return; }
+  if (d.target === 'todesbescheinigung' && d.fn === 'doPrint') { doPrint(); return; }
+
+  // Import Protokoll-Daten
+  if (d.type === 'td-import-data' && d.data) {
+    importData(d.data);
+  }
+});
+
+function importData(data) {
+  // Hilfsfunktion: Feld setzen und als importiert markieren
+  function set(id, val) {
+    var el = document.getElementById(id);
+    if (el && val) {
+      el.value = val;
+      el.classList.add('imported');
+    }
+  }
+
+  // Patient → Verstorbene Person
+  set('td_nachname', data.pat_nachname);
+  set('td_vorname', data.pat_vorname);
+  set('td_geburtsdatum', data.pat_geburtsdatum);
+  if (data.pat_geschlecht) {
+    var gs = document.getElementById('td_geschlecht');
+    if (gs) gs.value = data.pat_geschlecht;
+  }
+  set('td_beruf', data.pat_beruf);
+
+  // Einsatzdaten
+  set('tb_enr', data.enr);
+  set('tb_ort', data.einsatzort);
+  if (data.einsatz_datum) {
+    document.getElementById('tb_datum').value = data.einsatz_datum;
+    document.getElementById('td_todesdatum').value = data.einsatz_datum;
+  }
+
+  // Todeszeitpunkt
+  set('td_todeszeit', data.toteszeitpunkt);
+  if (data.toteszeitpunkt) set('tb_uhrzeit', data.toteszeitpunkt);
+
+  // Fahrzeug
+  set('td_fz_kennung', data.fz_kennung);
+  set('td_ausrueck', data.ausrueck_time);
+  set('td_ankunft', data.ankunft_time);
+
+  // Notarzt
+  set('td_notarzt_name', data.notarzt_name);
+  set('sig_notarzt_name', data.notarzt_name);
+
+  // Todesart erkennen
+  if (data.einsatzart) {
+    if (data.einsatzart.toLowerCase().indexOf('notfall') !== -1 ||
+        data.einsatzart.toLowerCase().indexOf('reanimation') !== -1) {
+      var ra = document.getElementById('ta_reanimation');
+      if (ra) ra.checked = true;
+    }
+  }
+
+  // Todeszeichen aus Erkrankungen-Checkboxen
+  if (data.herzstillstand) {
+    document.getElementById('tz_livores') && (document.getElementById('tz_livores').checked = false);
+  }
+
+  // Umstände aus Ergebnis
+  set('td_umstaende', data.uebergabe_bericht);
+
+  // Reanimation
+  if (data.massnahmen_reanimation) {
+    document.getElementById('reani_ja').checked = true;
+    var d2 = document.getElementById('reani-details');
+    if (d2) d2.style.display = 'flex';
+  }
+
+  // Import-Indikator anzeigen
+  var ind = document.getElementById('import-indicator');
+  if (ind) ind.style.display = 'flex';
+
+  // Notification-Toast
+  showToast('Daten aus Einsatz-Protokoll importiert');
+}
+
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7B3FA0;color:#fff;padding:10px 22px;border-radius:3px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:1px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:toastIn .3s ease;';
+  t.textContent = '✓ ' + msg;
+  var style = document.createElement('style');
+  style.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+  document.head.appendChild(style);
+  document.body.appendChild(t);
+  setTimeout(function() {
+    t.style.transition = 'opacity .3s';
+    t.style.opacity = '0';
+    setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+  }, 2800);
+}
+</script>
+</body>
+</html>

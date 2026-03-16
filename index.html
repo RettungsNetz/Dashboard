@@ -402,6 +402,15 @@ header {
         </svg>
         Als PDF drucken
       </button>
+      <div class="tb-sep"></div>
+      <button class="hbtn pur" onclick="openTodesbescheinigung()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Todesbescheinigung
+      </button>
     </div>
 
     <!-- ── FAHRZEUGPLANER toolbar ── -->
@@ -783,6 +792,40 @@ header {
       <iframe class="tool-frame" id="frame-protokol" src="" title="Einsatz-Protokoll"></iframe>
     </div>
 
+    <!-- ════ TODESBESCHEINIGUNG MODAL ════ -->
+    <div id="td-modal-overlay" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+      <style>
+      @keyframes warnPopTD{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+      .td-badge{background:rgba(123,63,160,.2);border:1px solid #7B3FA0;color:#c4a0e0;font-size:10px;padding:3px 8px;border-radius:2px;font-family:var(--mono);}
+      #td-val-close:hover{border-color:#666!important;}
+      #td-val-open-empty:hover{background:rgba(123,63,160,.35)!important;}
+      #td-val-import-anyway:hover{background:#5e2f7a!important;}
+      #td-close-btn:hover{border-color:#7B3FA0!important;color:#c4a0e0!important;}
+      </style>
+      <!-- Validation popup -->
+      <div id="td-val-box" style="display:none;background:#1a1a1a;border:2px solid #7B3FA0;border-radius:4px;padding:28px 32px 22px;max-width:460px;width:90%;flex-direction:column;align-items:center;gap:14px;box-shadow:0 0 40px rgba(123,63,160,.4),0 8px 32px rgba(0,0,0,.6);animation:warnPopTD .22s cubic-bezier(.34,1.56,.64,1);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7B3FA0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="44" height="44"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div style="font-size:16px;font-weight:700;color:#f0f4fa;letter-spacing:1px;font-family:var(--cond);text-transform:uppercase;">Pflichtfelder fehlen</div>
+        <div style="font-size:12px;color:#8a9ab5;text-align:center;line-height:1.5;font-family:var(--sans);">Bevor die Todesbescheinigung erstellt werden kann, müssen folgende Felder im Einsatz-Protokoll ausgefüllt sein:</div>
+        <div id="td-val-badges" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
+        <div style="font-size:11px;color:#666;text-align:center;font-family:var(--mono);">Bitte das Einsatz-Protokoll ergänzen und erneut versuchen, oder die Todesbescheinigung ohne Import öffnen.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <button id="td-val-close" style="background:#222;border:1px solid #444;color:#cdd6e8;padding:8px 18px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-radius:2px;">Zurück &amp; Ergänzen</button>
+          <button id="td-val-open-empty" style="display:none;"></button>
+          <button id="td-val-import-anyway" style="background:#7B3FA0;border:1px solid #7B3FA0;color:#fff;padding:8px 18px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-radius:2px;">Trotzdem importieren</button>
+        </div>
+      </div>
+      <!-- Todesbescheinigung iframe panel -->
+      <div id="td-iframe-panel" style="display:none;width:95vw;height:92vh;max-width:1300px;flex-direction:column;background:#0d1117;border:1px solid #7B3FA0;box-shadow:0 0 60px rgba(123,63,160,.35),0 16px 48px rgba(0,0,0,.8);border-radius:4px;overflow:hidden;animation:warnPopTD .25s cubic-bezier(.34,1.56,.64,1);">
+        <div style="background:#0d1117;border-bottom:2px solid #7B3FA0;display:flex;align-items:center;height:42px;padding:0 14px;flex-shrink:0;gap:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#7B3FA0;box-shadow:0 0 6px rgba(139,92,246,.6);flex-shrink:0;"></div>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:2px;color:#cdd6e8;text-transform:uppercase;flex:1;">☩ Vorläufige Todesbescheinigung — Notarzt-Dokument</span>
+          <button id="td-close-btn" style="background:none;border:1px solid #1e2a3a;color:#8a9ab5;width:28px;height:28px;cursor:pointer;border-radius:2px;font-size:14px;display:flex;align-items:center;justify-content:center;" title="Schließen">✕</button>
+        </div>
+        <iframe id="frame-todesbescheinigung" src="" title="Vorläufige Todesbescheinigung" style="flex:1;border:none;width:100%;min-height:0;"></iframe>
+      </div>
+    </div>
+
     <!-- ── FAHRZEUGPLANER ── -->
     <div class="tool-view" id="view-fahrzeug">
       <iframe class="tool-frame" id="frame-fahrzeug" src="" title="Fahrzeugplaner"></iframe>
@@ -1035,6 +1078,108 @@ function protoPrint() {
   sendToFrame('frame-protokol', 'protokol', 'doPrint');
 }
 
+// ── Todesbescheinigung ──
+let _tdFrameLoaded = false;
+let _tdPanelOpen = false;
+let _tdDataCallback = null;
+
+const TD_REQUIRED_FIELDS = [
+  { id: 'pat_nachname',   label: 'Patient · Nachname' },
+  { id: 'pat_vorname',    label: 'Patient · Vorname' },
+  { id: 'fz_kennung',     label: 'Fahrzeuge & Besatzung · Kennung' },
+  { id: 'ausrueck_time',  label: 'Ausrückezeit' },
+  { id: 'ankunft_time',   label: 'Ankunftszeit' }
+];
+
+function requestProtoData(callback) {
+  const f = document.getElementById('frame-protokol');
+  if (!f || !f.contentWindow) { callback(null); return; }
+  _tdDataCallback = callback;
+  f.contentWindow.postMessage({ target: 'protokol', fn: 'getData' }, '*');
+  setTimeout(function() {
+    if (_tdDataCallback) { const cb = _tdDataCallback; _tdDataCallback = null; cb(null); }
+  }, 1500);
+}
+
+function openTodesbescheinigung() {
+  const overlay = document.getElementById('td-modal-overlay');
+  if (_tdPanelOpen) {
+    document.getElementById('td-val-box').style.display = 'none';
+    document.getElementById('td-iframe-panel').style.display = 'flex';
+    overlay.style.display = 'flex';
+    return;
+  }
+  document.getElementById('td-val-box').style.display = 'none';
+  document.getElementById('td-iframe-panel').style.display = 'none';
+  overlay.style.display = 'flex';
+  if (!frameLoaded['protokol']) { _openTDFrameWithData(null); return; }
+  requestProtoData(function(data) {
+    if (!data) { _openTDFrameWithData(null); return; }
+    const missing = [];
+    TD_REQUIRED_FIELDS.forEach(function(field) {
+      if (!data[field.id] || data[field.id] === '') missing.push(field);
+    });
+    if (missing.length === 0) { _openTDFrameWithData(data); }
+    else { _showTDValidation(missing, data); }
+  });
+}
+
+function _showTDValidation(missingList, data) {
+  const valBox = document.getElementById('td-val-box');
+  document.getElementById('td-val-badges').innerHTML = missingList.map(f => `<span class="td-badge">${f.label}</span>`).join('');
+  document.getElementById('td-iframe-panel').style.display = 'none';
+  valBox.style.display = 'flex';
+  function rebind(id, fn) {
+    const old = document.getElementById(id);
+    const fresh = old.cloneNode(true);
+    old.parentNode.replaceChild(fresh, old);
+    document.getElementById(id).addEventListener('click', fn);
+  }
+  rebind('td-val-close', function() { closeTDModal(); });
+  rebind('td-val-open-empty', function() {
+    document.getElementById('td-val-box').style.display = 'none';
+    _openTDFrameWithData(null);
+  });
+  rebind('td-val-import-anyway', function() {
+    document.getElementById('td-val-box').style.display = 'none';
+    _openTDFrameWithData(data);
+  });
+  document.getElementById('td-modal-overlay').onclick = function(e) { if (e.target === this) closeTDModal(); };
+}
+
+function _openTDFrameWithData(data) {
+  document.getElementById('td-val-box').style.display = 'none';
+  document.getElementById('td-iframe-panel').style.display = 'flex';
+  _tdPanelOpen = true;
+  const f = document.getElementById('frame-todesbescheinigung');
+  function sendData() {
+    if (data && f.contentWindow) {
+      f.contentWindow.postMessage({ type: 'td-import-data', data: data }, '*');
+    }
+  }
+  if (!_tdFrameLoaded) {
+    f.src = 'Todesbescheinigung.html';
+    _tdFrameLoaded = true;
+    f.addEventListener('load', function() { setTimeout(sendData, 300); }, { once: true });
+  } else {
+    setTimeout(sendData, 80);
+  }
+  document.getElementById('td-close-btn').onclick = closeTDModal;
+  document.getElementById('td-modal-overlay').onclick = function(e) { if (e.target === this) closeTDModal(); };
+}
+
+function closeTDModal() {
+  const overlay = document.getElementById('td-modal-overlay');
+  overlay.style.opacity = '0';
+  overlay.style.transition = 'opacity .15s';
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    overlay.style.opacity = '1';
+    overlay.style.transition = '';
+    document.getElementById('td-val-box').style.display = 'none';
+  }, 160);
+}
+
 // ── Fahrzeugplaner ──
 function fzSend(fn, arg) { sendToFrame('frame-fahrzeug', 'fahrzeug', fn, arg); }
 
@@ -1112,6 +1257,12 @@ window.addEventListener('message', e => {
   // MANV mode change (online/offline + user count)
   if (d.type === 'manv-mode') {
     manvUpdateModeUI(d.online, d.users);
+  }
+  // Protokoll-Daten Antwort für Todesbescheinigung
+  if (d.type === 'protokol-data' && _tdDataCallback) {
+    const cb = _tdDataCallback;
+    _tdDataCallback = null;
+    cb(d.data);
   }
   // Protokoll meldet Dateinamen — Titel setzen, nach Druck wiederherstellen
   if (d.type === 'proto-filename' && d.fileName) {
